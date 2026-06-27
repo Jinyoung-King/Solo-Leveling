@@ -1,0 +1,12 @@
+# ninja log v5
+257	1115	7913217891552241	FramePacing/CMakeFiles/swappywrapper.dir/UnitySwappyWrapper.cpp.o	86a504367b537514
+1119	1585	7913217896196493	C:/Users/JINY/Solo Leveling/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/473b6d6f/obj/arm64-v8a/libswappywrapper.so	a0bbc29e54be7fde
+57	2169	7913217902087957	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	29813f4d0cc5ee0d
+32	2188	7913217902391745	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	61306479862c45e1
+210	2191	7913217902280095	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	23121e85e7864fc6
+172	2238	7913217902868320	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	f1fa33b413114554
+86	2310	7913217903572589	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	20386c8f08c783ca
+116	2579	7913217906181641	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	f7f2ac64035ba3ac
+1	2761	7913217908025350	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	5ea1db63c59a3f2
+144	2804	7913217908464634	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	97f6db517558b1e5
+2805	3058	7913217911031209	C:/Users/JINY/Solo Leveling/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/473b6d6f/obj/arm64-v8a/libgame.so	6387a538cb502df1
