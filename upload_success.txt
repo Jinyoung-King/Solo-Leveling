@@ -1,0 +1,1 @@
+Release successful: https://github.com/Jinyoung-King/Solo-Leveling/releases/tag/v1.0.7
