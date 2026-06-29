@@ -6,6 +6,27 @@ using System;
 using System.Collections;
 
 [System.Serializable]
+public class Equipment
+{
+    public string equipName;
+    public string rarity; // "Common", "Rare", "Epic", "Legendary"
+    public int level = 0; // 중복 획득 시 레벨업
+    public float statBonus; // 추가 수치 (LPS 가산 또는 배율)
+    public string bonusType; // "LPS", "Multiplier", "Click"
+    public string description;
+
+    public Equipment(string name, string rarity, float bonus, string type, string desc)
+    {
+        equipName = name;
+        this.rarity = rarity;
+        statBonus = bonus;
+        bonusType = type;
+        description = desc;
+        level = 0;
+    }
+}
+
+[System.Serializable]
 public class Unit
 {
     public string unitName;
@@ -140,6 +161,13 @@ public class GameManager : MonoBehaviour
 
     void Start()
     {
+        // [추가] 모바일 플랫폼 프레임 레이트 상향 조정 (기본 30 FPS -> 60 FPS)
+        // 화면 스크롤(슬라이드) 시 끊기는 렉 현상을 완전히 제거합니다.
+        Application.targetFrameRate = 60;
+
+        // [추가] 장비 시스템 데이터 생성
+        InitializeEquipments();
+
         // [신규] 슬라이더 설정 강제 초기화 (이게 없어서 안 움직였을 수 있음!)
         if (coffeeSlider != null)
         {
@@ -170,13 +198,23 @@ public class GameManager : MonoBehaviour
             units.Add(newUnit);
 
             GameObject btnObj = Instantiate(shopButtonPrefab, shopContent);
-            // [추가] 버튼 프리팹 안에 있는 아이콘 이미지 컴포넌트 찾기
-            // (프리팹 구조상 Img_Icon은 버튼의 첫 번째 자식일 확률이 높습니다)
-            // 만약 못 찾으면 btnObj.transform.Find("Img_Icon").GetComponent<Image>() 로 찾아야 합니다.
-            Image iconImage = btnObj.GetComponentsInChildren<Image>()[1]; // 0번은 버튼 자기 자신이라서 1번을 찾음
+            
+            // 안전한 아이콘 이미지 컴포넌트 탐색
+            Image iconImage = null;
+            Image[] allImages = btnObj.GetComponentsInChildren<Image>(true);
+            Button btnComponent = btnObj.GetComponent<Button>();
+            foreach (var img in allImages)
+            {
+                if (btnComponent != null && img == btnComponent.targetGraphic)
+                {
+                    continue; // 버튼 배경용 이미지는 스킵
+                }
+                iconImage = img; // 실제 자식 아이콘 이미지 바인딩
+                break;
+            }
 
             // 아이콘 적용
-            if (newUnit.iconSprite != null)
+            if (iconImage != null && newUnit.iconSprite != null)
             {
                 iconImage.sprite = newUnit.iconSprite;
             }
@@ -313,14 +351,18 @@ public class GameManager : MonoBehaviour
         long total = 0;
         foreach (Unit unit in units) total += (unit.count * unit.revenuePerSec);
 
+        // [추가] 장비 LPS 보너스 합산
+        total += GetEquipmentLPS();
+
         if (isCoffeeTime) total *= 2;
 
         // [추가] 오버클럭이면 5배! (커피랑 중첩되면 10배!)
         if (isOverclock) total *= 5;
 
-        // 디스크 1개당 10% 추가 (1개 = 1.1배)
+        // 디스크 1개당 10% 추가 (1개 = 1.1배) & 장비 배율 보너스 중첩 적용
         float prestigeMultiplier = 1f + (goldenDisks * 0.1f);
-        total = (long)(total * prestigeMultiplier);
+        float equipMultiplier = GetEquipmentMultiplier();
+        total = (long)(total * prestigeMultiplier * equipMultiplier);
 
         return total;
     }
@@ -366,9 +408,13 @@ public class GameManager : MonoBehaviour
     {
         long clickProfit = serverLevel;
 
+        // [추가] 장비 클릭 보너스 합산
+        clickProfit += GetEquipmentClick();
+
         // 기존 코드 밑에 추가:
         float prestigeMultiplier = 1f + (goldenDisks * 0.1f);
-        clickProfit = (long)(clickProfit * prestigeMultiplier);
+        float equipMultiplier = GetEquipmentMultiplier();
+        clickProfit = (long)(clickProfit * prestigeMultiplier * equipMultiplier);
 
         // [추가] 오버클럭이면 클릭 효율도 5배
         if (isOverclock) clickProfit *= 5;
@@ -499,6 +545,16 @@ public class GameManager : MonoBehaviour
         {
             PlayerPrefs.SetInt("Unit_" + i, units[i].count);
         }
+        // 장비 레벨 저장
+        if (equipments != null)
+        {
+            for (int i = 0; i < equipments.Count; i++)
+            {
+                PlayerPrefs.SetInt("Equip_" + i, equipments[i].level);
+            }
+        }
+        PlayerPrefs.SetString("GachaCost", gachaCost.ToString());
+
         PlayerPrefs.SetString(KEY_TIME, DateTime.Now.ToBinary().ToString());
         PlayerPrefs.Save();
     }
@@ -523,25 +579,39 @@ public class GameManager : MonoBehaviour
             units[i].LoadCount(savedCount);
         }
 
-        // 부재중 보상 계산
+        // 장비 레벨 복구
+        if (equipments != null)
+        {
+            for (int i = 0; i < equipments.Count; i++)
+            {
+                equipments[i].level = PlayerPrefs.GetInt("Equip_" + i, 0);
+            }
+        }
+        long.TryParse(PlayerPrefs.GetString("GachaCost", "50000"), out gachaCost);
+
+        // 부재중 보상 계산 (Convert.ToInt64 예외 및 데이터 꼬임 방어 가드)
         if (PlayerPrefs.HasKey(KEY_TIME))
         {
-            long temp = Convert.ToInt64(PlayerPrefs.GetString(KEY_TIME));
-            DateTime lastTime = DateTime.FromBinary(temp);
-
-            TimeSpan timeDiff = DateTime.Now - lastTime;
-            double secondsPassed = timeDiff.TotalSeconds;
-
-            if (secondsPassed > 0)
+            string timeStr = PlayerPrefs.GetString(KEY_TIME);
+            long temp = 0;
+            if (long.TryParse(timeStr, out temp))
             {
-                long revenuePerSec = GetTotalRevenue();
-                long offlineReward = (long)(secondsPassed * revenuePerSec);
+                DateTime lastTime = DateTime.FromBinary(temp);
 
-                if (offlineReward > 0)
+                TimeSpan timeDiff = DateTime.Now - lastTime;
+                double secondsPassed = timeDiff.TotalSeconds;
+
+                if (secondsPassed > 0)
                 {
-                    logs += offlineReward;
-                    Debug.Log($"[배치] {secondsPassed:F0}초 경과, {offlineReward} 획득");
-                    ShowRewardPopup(secondsPassed, offlineReward);
+                    long revenuePerSec = GetTotalRevenue();
+                    long offlineReward = (long)(secondsPassed * revenuePerSec);
+
+                    if (offlineReward > 0)
+                    {
+                        logs += offlineReward;
+                        Debug.Log($"[배치] {secondsPassed:F0}초 경과, {offlineReward} 획득");
+                        ShowRewardPopup(secondsPassed, offlineReward);
+                    }
                 }
             }
         }
@@ -549,7 +619,7 @@ public class GameManager : MonoBehaviour
 
     void ShowRewardPopup(double seconds, long reward)
     {
-        if (rewardPopup != null)
+        if (rewardPopup != null && rewardMessage != null)
         {
             // [수정] 포맷팅 적용
             rewardMessage.text = $"[배치 작업 리포트]\n\n지난 {seconds:F0}초 동안\n서버가 열심히 돌아서\n\n<color=yellow>+{FormatNumber(reward)} Logs</color>\n를 수집했습니다!";
@@ -602,53 +672,57 @@ public class GameManager : MonoBehaviour
 
     public void UpdateUI()
     {
-        // 1. 왼쪽: 현재 보유 로그 (크게)
-        // 서식이 너무 길면 <size> 태그로 단위만 작게 줄여도 예쁨
-        scoreText.text = $"{FormatNumber(logs)} <size=70%>Logs</size>";
+        // 1. 왼쪽: 현재 보유 로그 (널 가드 장착)
+        if (scoreText != null)
+        {
+            scoreText.text = $"{FormatNumber(logs)} <size=70%>Logs</size>";
+            if (isCoffeeTime) scoreText.color = Color.yellow;
+            else scoreText.color = Color.green;
+        }
 
         // 2. 오른쪽: 상세 정보 (My Info)
         if (myInfoText != null)
         {
-            // (1) 초당 수입 (LPS: Logs Per Second)
             long currentLPS = GetTotalRevenue();
             
-            // (2) 현재 적용된 총 배율 계산 (디스플레이용)
             float totalMultiplier = 1f;
             if (isCoffeeTime) totalMultiplier *= 2f;
             if (isOverclock) totalMultiplier *= 5f;
             totalMultiplier *= (1f + (goldenDisks * 0.1f)); // 환생 보너스
 
-            // 텍스트 조합 (Rich Text 활용)
-            // ⚡: LPS, 💾: 디스크, 🚀: 배율, 💻: 서버 레벨
+            // 장비 곱연산 배율 누적
+            float equipMultiplier = GetEquipmentMultiplier();
+            totalMultiplier *= equipMultiplier;
+
             myInfoText.text = 
                 $"<color=#00FF00>⚡ {FormatNumber(currentLPS)} /sec</color>\n" +
                 $"<color=#FFD700>💾 Disk: {goldenDisks}</color> | <color=#00FFFF>💻 Lv.{serverLevel}</color>\n" +
                 $"<size=80%>(Current Boost: <color=orange>x{totalMultiplier:F1}</color>)</size>";
         }
 
-        // 커피 타임이면 점수판 색깔을 노란색으로 바꿔서 흥분감 조성!
-        if (isCoffeeTime) scoreText.color = Color.yellow;
-        else scoreText.color = Color.green; // 평소엔 초록색
-
-        // [신규] 업그레이드 버튼 텍스트 갱신
+        // 3. [신규] 업그레이드 버튼 텍스트 갱신
         if (upgradeText != null)
         {
             upgradeText.text = $"<b>CPU Upgrade (Lv.{serverLevel})</b>\nCost: {FormatNumber(upgradeCost)}";
-            // 돈 없으면 버튼 비활성화 느낌 (빨간 글씨)
             upgradeText.color = (logs >= upgradeCost) ? Color.cyan : Color.red;
         }
 
-        // 상점 목록 갱신
-        for (int i = 0; i < units.Count; i++)
+        // 4. 상점 목록 갱신 (리스트 및 인덱스 널 가드 장착)
+        if (generatedButtonTexts != null && units != null)
         {
-            Unit u = units[i];
-            string colorHex = (logs >= u.currentCost) ? "#00FF00" : "#FF0000";
+            for (int i = 0; i < units.Count; i++)
+            {
+                if (i < generatedButtonTexts.Count && generatedButtonTexts[i] != null)
+                {
+                    Unit u = units[i];
+                    string colorHex = (logs >= u.currentCost) ? "#00FF00" : "#FF0000";
 
-            // 이름 옆에 주황색(Orange)으로 Lv.개수 표시
-            generatedButtonTexts[i].text =
-                $"<b>{u.unitName}</b> <color=orange>Lv.{u.count}</color>\n" +
-                $"<size=80%>{FormatNumber(u.revenuePerSec)} /sec</size>\n" +
-                $"<color={colorHex}>Cost: {FormatNumber(u.currentCost)}</color>";
+                    generatedButtonTexts[i].text =
+                        $"<b>{u.unitName}</b> <color=orange>Lv.{u.count}</color>\n" +
+                        $"<size=80%>{FormatNumber(u.revenuePerSec)} /sec</size>\n" +
+                        $"<color={colorHex}>Cost: {FormatNumber(u.currentCost)}</color>";
+                }
+            }
         }
     }
 
@@ -769,5 +843,170 @@ public class GameManager : MonoBehaviour
         // 5. 멋진 로그 출력
         terminalManager?.AddLog($"<color=#00FFFF><b>=== MIGRATION COMPLETED ===</b></color>");
         terminalManager?.AddLog($"<color=yellow>New Bonus: +{goldenDisks * 10}% Revenue!</color>");
+    }
+
+    // ---------------------------------------------------------
+    // 🎰 가차 (뽑기) 장비 시스템 추가 구현부
+    // ---------------------------------------------------------
+    [Header("Gacha UI System")]
+    public GameObject gachaPanel;
+    public TextMeshProUGUI gachaResultText;
+    public TextMeshProUGUI equipmentListText;
+    public TextMeshProUGUI gachaCostText;
+
+    [HideInInspector]
+    public List<Equipment> equipments = new List<Equipment>();
+    [HideInInspector]
+    public long gachaCost = 50000; // 초기 비용 5만 로그
+
+    void InitializeEquipments()
+    {
+        if (equipments == null) equipments = new List<Equipment>();
+        equipments.Clear();
+        // Common (일반)
+        equipments.Add(new Equipment("다이소 마우스", "Common", 2f, "Click", "클릭당 로그 획득 +2"));
+        equipments.Add(new Equipment("멤브레인 키보드", "Common", 15f, "LPS", "초당 로그 생산 +15"));
+        equipments.Add(new Equipment("15인치 구형 CRT 모니터", "Common", 40f, "LPS", "초당 로그 생산 +40"));
+
+        // Rare (희귀)
+        equipments.Add(new Equipment("버티컬 마우스", "Rare", 10f, "Click", "클릭당 로그 획득 +10"));
+        equipments.Add(new Equipment("한성 무접점 키보드", "Rare", 200f, "LPS", "초당 로그 생산 +200"));
+        equipments.Add(new Equipment("FHD 듀얼 모니터", "Rare", 500f, "LPS", "초당 로그 생산 +500"));
+
+        // Epic (에픽)
+        equipments.Add(new Equipment("로지텍 지프로 무선", "Epic", 50f, "Click", "클릭당 로그 획득 +50"));
+        equipments.Add(new Equipment("리얼포스 키보드", "Epic", 2000f, "LPS", "초당 로그 생산 +2,000"));
+        equipments.Add(new Equipment("4K 울트라와이드 모니터", "Epic", 6000f, "LPS", "초당 로그 생산 +6,000"));
+
+        // Legendary (전설)
+        equipments.Add(new Equipment("RTX 5090 Ti 그래픽카드", "Legendary", 0.5f, "Multiplier", "서버 오버클럭/기본 배율 +50% (+0.5)"));
+        equipments.Add(new Equipment("허먼밀러 에어론 의자", "Legendary", 1.0f, "Multiplier", "서버 전체 로그 수입 +100% (+1.0)"));
+    }
+
+    public long GetEquipmentLPS()
+    {
+        long lps = 0;
+        if (equipments == null) return 0;
+        foreach (var eq in equipments)
+        {
+            if (eq.bonusType == "LPS") lps += (long)(eq.statBonus * eq.level);
+        }
+        return lps;
+    }
+
+    public long GetEquipmentClick()
+    {
+        long click = 0;
+        if (equipments == null) return 0;
+        foreach (var eq in equipments)
+        {
+            if (eq.bonusType == "Click") click += (long)(eq.statBonus * eq.level);
+        }
+        return click;
+    }
+
+    public float GetEquipmentMultiplier()
+    {
+        float mult = 1f;
+        if (equipments == null) return 1f;
+        foreach (var eq in equipments)
+        {
+            if (eq.bonusType == "Multiplier") mult += (eq.statBonus * eq.level);
+        }
+        return mult;
+    }
+
+    public void OpenGachaPanel()
+    {
+        if (gachaPanel != null)
+        {
+            gachaPanel.SetActive(true);
+            gachaPanel.transform.SetAsLastSibling();
+            UpdateGachaUI();
+        }
+    }
+
+    public void CloseGachaPanel()
+    {
+        if (gachaPanel != null) gachaPanel.SetActive(false);
+    }
+
+    public void DrawEquipmentGacha()
+    {
+        if (equipments == null || equipments.Count == 0) InitializeEquipments();
+
+        if (logs < gachaCost)
+        {
+            terminalManager?.AddLog("<color=red>[ERROR] 가차 비용이 부족합니다!</color>");
+            return;
+        }
+
+        logs -= gachaCost;
+        long lastCost = gachaCost;
+        gachaCost = (long)(gachaCost * 1.25f); // 비용 점진적 25% 상승
+
+        // 가차 뽑기 (확률: Common 60%, Rare 30%, Epic 8.5%, Legendary 1.5%)
+        float dice = UnityEngine.Random.Range(0f, 100f);
+        string targetRarity = "Common";
+
+        if (dice < 1.5f) targetRarity = "Legendary";
+        else if (dice < 10.0f) targetRarity = "Epic";
+        else if (dice < 40.0f) targetRarity = "Rare";
+        else targetRarity = "Common";
+
+        List<Equipment> candidates = equipments.FindAll(e => e.rarity == targetRarity);
+        if (candidates.Count == 0) candidates = equipments;
+
+        Equipment drawn = candidates[UnityEngine.Random.Range(0, candidates.Count)];
+        drawn.level++;
+
+        SaveGame();
+        UpdateUI();
+        UpdateGachaUI();
+
+        string rarityColor = "#FFFFFF";
+        if (drawn.rarity == "Rare") rarityColor = "#32CD32";
+        else if (drawn.rarity == "Epic") rarityColor = "#1E90FF";
+        else if (drawn.rarity == "Legendary") rarityColor = "#FFD700";
+
+        // 터미널 피드백
+        terminalManager?.AddLog($"🎰 <color=yellow><b>[GACHA]</b></color> <color={rarityColor}><b>[{drawn.rarity}] {drawn.equipName}</b></color> 획득! (현재 Lv.{drawn.level})");
+        terminalManager?.AddLog($"   └ 효과: {drawn.description}");
+
+        if (gachaResultText != null)
+        {
+            gachaResultText.text = $"🎰 <color={rarityColor}><b>[{drawn.rarity}]</b></color> 획득!\n<size=120%><b>{drawn.equipName}</b></size>\n\n<size=80%>{drawn.description}</size>";
+        }
+
+        if (buttonShaker != null && drawn.rarity == "Legendary")
+        {
+            buttonShaker.Shake();
+        }
+    }
+
+    public void UpdateGachaUI()
+    {
+        if (gachaCostText != null)
+        {
+            gachaCostText.text = $"🎰 <b>1회 뽑기</b>\nCost: {FormatNumber(gachaCost)} Logs";
+            gachaCostText.color = (logs >= gachaCost) ? Color.yellow : Color.red;
+        }
+
+        if (equipmentListText != null && equipments != null)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            sb.AppendLine("<color=yellow>=== 보유 장비 목록 (도감) ===</color>");
+            foreach (var eq in equipments)
+            {
+                string rarityColor = "#FFFFFF";
+                if (eq.rarity == "Rare") rarityColor = "#32CD32";
+                else if (eq.rarity == "Epic") rarityColor = "#1E90FF";
+                else if (eq.rarity == "Legendary") rarityColor = "#FFD700";
+
+                sb.AppendLine($"<color={rarityColor}>[{eq.rarity}]</color> {eq.equipName} <color=orange>Lv.{eq.level}</color>");
+                sb.AppendLine($"<size=85%>{eq.description} (합계: +{eq.statBonus * eq.level:F1})</size>");
+            }
+            equipmentListText.text = sb.ToString();
+        }
     }
 }

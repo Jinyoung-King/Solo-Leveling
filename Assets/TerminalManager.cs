@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI; // [추가] Button 컴포넌트 사용을 위해 필요
 using System.Collections.Generic;
 using System;
 
@@ -29,8 +30,17 @@ public class TerminalManager : MonoBehaviour
             // 엔터키를 눌렀을 때 실행될 리스너 추가
             inputField.onSubmit.AddListener(OnSubmitInput);
             
-            // 시작할 때 입력창 활성화
-            inputField.ActivateInputField();
+            // 시작할 때 입력창 활성화 (모바일 즉시 키보드 팝업 크래시 방지 및 UX 개선을 위해 플랫폼별 분기 처리)
+            try
+            {
+                #if !UNITY_ANDROID && !UNITY_IOS
+                inputField.ActivateInputField();
+                #endif
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning("[TerminalManager] Failed to activate input field: " + e.Message);
+            }
         }
 
         // [추가] Send 버튼 자동 검색 및 이벤트 바인딩
@@ -42,6 +52,64 @@ public class TerminalManager : MonoBehaviour
                 btn.onClick.AddListener(OnClickSendButton);
                 break;
             }
+        }
+
+        // [추가] 로그 아이콘 버튼 검색 및 터미널 패널/텍스트 터치 시 확장 연동
+        Button logIconButton = null;
+        Button[] allButtons = FindObjectsOfType<Button>(true);
+        foreach (var btn in allButtons)
+        {
+            if (btn.gameObject.name.ToLower().Contains("log") && 
+                !btn.gameObject.name.ToLower().Contains("send") && 
+                !btn.gameObject.name.ToLower().Contains("submit") &&
+                !btn.gameObject.name.ToLower().Contains("text"))
+            {
+                logIconButton = btn;
+                break;
+            }
+            Image img = btn.GetComponent<Image>();
+            if (img != null && img.sprite != null && img.sprite.name.ToLower().Contains("log"))
+            {
+                logIconButton = btn;
+                break;
+            }
+        }
+
+        // 1. 터미널 패널 (Panel_Terminal) 터치 연동 (안전한 예외 처리 및 널 방지)
+        try
+        {
+            Image panelImg = GetComponent<Image>();
+            if (panelImg != null)
+            {
+                panelImg.raycastTarget = true;
+                Button panelBtn = gameObject.GetComponent<Button>();
+                if (panelBtn == null)
+                {
+                    panelBtn = gameObject.AddComponent<Button>();
+                }
+                if (panelBtn != null)
+                {
+                    panelBtn.transition = Selectable.Transition.None;
+                    panelBtn.onClick.RemoveAllListeners();
+                    panelBtn.onClick.AddListener(() => {
+                        if (logIconButton != null)
+                        {
+                            logIconButton.onClick.Invoke();
+                        }
+                    });
+                }
+            }
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("[TerminalManager] Failed to bind panel button: " + e.Message);
+        }
+
+        // 2. 터미널 텍스트 (Txt_TerminalLog) 터치 패스스루 설정
+        // 텍스트에는 동적 버튼을 달지 않고 터치를 통과시켜 배경 패널 버튼이 받도록 합니다. (런타임 크래시 완전 방지)
+        if (terminalText != null)
+        {
+            terminalText.raycastTarget = false;
         }
 
         AddLog("<color=green>System initialized. Welcome to Solo Leveling Terminal!</color>");
@@ -148,6 +216,7 @@ public class TerminalManager : MonoBehaviour
                 AddLog("<color=cyan>coffee</color> - Activate coffee booster (if available)");
                 AddLog("<color=cyan>bugfix</color> / <color=cyan>kill -9 bug</color> - Debug and fix active bug event");
                 AddLog("<color=cyan>buy [name]</color> - Buy a tech stack (e.g. 'buy docker', 'buy aws')");
+                AddLog("<color=cyan>gacha</color> / <color=cyan>draw</color> - Draw random equipment (Costs 50.0K+ Logs)");
                 break;
 
             case "clear":
@@ -237,6 +306,14 @@ public class TerminalManager : MonoBehaviour
 
             case "bugfix":
                 FixBugCommand();
+                break;
+
+            case "gacha":
+            case "draw":
+                if (gameManager != null)
+                {
+                    gameManager.DrawEquipmentGacha();
+                }
                 break;
 
             case "kill":

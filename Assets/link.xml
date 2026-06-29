@@ -1,0 +1,7 @@
+<linker>
+  <!-- IL2CPP 빌드 링커의 코드 스트리핑(코드 강제 제거)으로 인한 런타임 크래시를 완벽 차단합니다. -->
+  <assembly fullname="Assembly-CSharp" preserve="all"/>
+  <assembly fullname="Unity.TextMeshPro" preserve="all"/>
+  <assembly fullname="UnityEngine.UI" preserve="all"/>
+  <assembly fullname="UnityEngine.CoreModule" preserve="all"/>
+</linker>
