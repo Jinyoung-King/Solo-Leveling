@@ -280,7 +280,7 @@ MonoBehaviour:
   - {fileID: -7847854278355442738, guid: f827694a3d88f9447807d38a4995513c, type: 3}
   - {fileID: -171140955237636191, guid: 9a141ddc5bbe93a4fbd140d84e32706e, type: 3}
   - {fileID: 4447463109833951182, guid: da3beac572218aa4a90a1db91585bd11, type: 3}
-  - {fileID: -1198709745374593742, guid: 6d894e5aa59c5e14fa4d25c1cc8a6d60, type: 3}
+  - {fileID: -9063310359682264456, guid: b817e826b038b954d8403681db35422d, type: 3}
   buttonShaker: {fileID: 1186959068}
   serverButtonTr: {fileID: 1186959064}
   effectPrefab: {fileID: 3165315508662233158, guid: bc20531e3a4b9a148b27196857b275ee, type: 3}
