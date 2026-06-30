@@ -5,62 +5,7 @@ using System.Collections.Generic;
 using System;
 using System.Collections;
 
-[System.Serializable]
-public class Equipment
-{
-    public string equipName;
-    public string rarity; // "Common", "Rare", "Epic", "Legendary"
-    public int level = 0; // 중복 획득 시 레벨업
-    public float statBonus; // 추가 수치 (LPS 가산 또는 배율)
-    public string bonusType; // "LPS", "Multiplier", "Click"
-    public string description;
 
-    public Equipment(string name, string rarity, float bonus, string type, string desc)
-    {
-        equipName = name;
-        this.rarity = rarity;
-        statBonus = bonus;
-        bonusType = type;
-        description = desc;
-        level = 0;
-    }
-}
-
-[System.Serializable]
-public class Unit
-{
-    public string unitName;
-    public long revenuePerSec;
-    public long baseCost;
-    public long currentCost;
-    public int count = 0;
-    public Sprite iconSprite;
-
-    public Unit(string name, int tier)
-    {
-        unitName = name;
-        baseCost = (long)(10 * Mathf.Pow(10, tier));
-        revenuePerSec = (long)(1 * Mathf.Pow(5, tier));
-        currentCost = baseCost;
-    }
-
-    public void SetIcon(Sprite sprite)
-    {
-        this.iconSprite = sprite;
-    }
-
-    public void Buy()
-    {
-        count++;
-        currentCost = (long)(currentCost * 1.5f);
-    }
-
-    public void LoadCount(int savedCount)
-    {
-        count = savedCount;
-        currentCost = (long)(baseCost * Mathf.Pow(1.5f, savedCount));
-    }
-}
 
 public class GameManager : MonoBehaviour
 {
@@ -97,10 +42,10 @@ public class GameManager : MonoBehaviour
         "그림자 궁수 (Archer)",
         "그림자 순찰병 (Scout)",
         "그림자 마법사 (Mage)",
-        "그림자 기사 (Knight)",
-        "하이오크 주술사 (High Orc)",
+        "그림자 암살자 (Assassin)",
         "그림자 거인 (Giant)",
-        "그림자 백작 (Beru's Guard)",
+        "그림자 와이번 (Wyvern)",
+        "하이오크 주술사 (High Orc)",
         "지휘관 이그리트 (Igris)",
         "그림자 장군 베르 (Beru)"
     };
