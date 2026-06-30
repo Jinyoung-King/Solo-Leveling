@@ -93,8 +93,16 @@ public class GameManager : MonoBehaviour
     public ObjectShaker buttonShaker;
 
     string[] techNames = {
-        "Shell Script", "Docker", "Kubernetes", "AWS EC2", "Serverless Lambda",
-        "Kafka Cluster", "Elasticsearch", "Quantum Server", "AI DevOps Bot", "Dyson Sphere"
+        "그림자 보병 (Infantry)",
+        "그림자 궁수 (Archer)",
+        "그림자 순찰병 (Scout)",
+        "그림자 마법사 (Mage)",
+        "그림자 기사 (Knight)",
+        "하이오크 주술사 (High Orc)",
+        "그림자 거인 (Giant)",
+        "그림자 백작 (Beru's Guard)",
+        "지휘관 이그리트 (Igris)",
+        "그림자 장군 베르 (Beru)"
     };
 
     private float timer = 0f;
@@ -248,11 +256,11 @@ public class GameManager : MonoBehaviour
             clickProfit = (long)(clickProfit * chaosFactor);
 
             if (buttonShaker != null) buttonShaker.Shake();
-            terminalManager?.AddLog("<color=red>[FATAL] CRITICAL PACKET!</color>");
+            terminalManager?.AddLog("<color=red><b>[CRITICAL] SHADOW DAMAGE!</b></color>");
         }
         else
         {
-            if (UnityEngine.Random.Range(0, 10) < 2) terminalManager?.AddLog("<color=yellow>Packet received.</color>");
+            if (UnityEngine.Random.Range(0, 10) < 2) terminalManager?.AddLog("<color=yellow>Mana absorbed.</color>");
         }
 
         if (overclockManager != null)
@@ -304,7 +312,7 @@ public class GameManager : MonoBehaviour
             target.Buy();
             UpdateUI();
             SaveGame();
-            terminalManager?.AddLog($"<color=yellow><b>Deployed: {target.unitName}</b></color>");
+            terminalManager?.AddLog($"<color=yellow><b>Summoned: {target.unitName}</b></color>");
         }
     }
 
@@ -317,7 +325,7 @@ public class GameManager : MonoBehaviour
             upgradeCost = (long)(upgradeCost * 2.5f);
             UpdateUI();
             SaveGame();
-            terminalManager?.AddLog($"<color=blue><b>SERVER UPGRADE! Lv.{serverLevel}</b></color>");
+            terminalManager?.AddLog($"<color=blue><b>MONARCH LEVEL UP! Lv.{serverLevel}</b></color>");
         }
     }
 
@@ -339,7 +347,7 @@ public class GameManager : MonoBehaviour
     {
         if (rewardPopup != null && rewardMessage != null)
         {
-            rewardMessage.text = $"[배치 작업 리포트]\n\n지난 {seconds:F0}초 동안\n서버가 열심히 돌아서\n\n<color=yellow>+{FormatNumber(reward)} Logs</color>\n를 수집했습니다!";
+            rewardMessage.text = $"[그림자 영토 탐색 리포트]\n\n지난 {seconds:F0}초 동안\n그림자 군대가 게이트를 돌아서\n\n<color=yellow>+{FormatNumber(reward)} Mana</color>\n를 수집했습니다!";
             rewardPopup.SetActive(true);
             rewardPopup.transform.SetAsLastSibling();
         }
@@ -388,7 +396,7 @@ public class GameManager : MonoBehaviour
     {
         if (scoreText != null)
         {
-            scoreText.text = $"{FormatNumber(logs)} <size=70%>Logs</size>";
+            scoreText.text = $"{FormatNumber(logs)} <size=70%>Mana</size>";
             scoreText.color = IsCoffeeActive ? Color.yellow : Color.green;
         }
 
@@ -404,7 +412,7 @@ public class GameManager : MonoBehaviour
 
         if (upgradeText != null)
         {
-            upgradeText.text = $"<b>CPU Upgrade (Lv.{serverLevel})</b>\nCost: {FormatNumber(upgradeCost)}";
+            upgradeText.text = $"<b>Monarch Upgrade (Lv.{serverLevel})</b>\nCost: {FormatNumber(upgradeCost)}";
             upgradeText.color = (logs >= upgradeCost) ? Color.cyan : Color.red;
         }
 

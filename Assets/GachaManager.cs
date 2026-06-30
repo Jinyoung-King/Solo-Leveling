@@ -22,23 +22,23 @@ public class GachaManager : MonoBehaviour
         gameManager.equipments.Clear();
 
         // Common (일반)
-        gameManager.equipments.Add(new Equipment("다이소 마우스", "Common", 2f, "Click", "클릭당 로그 획득 +2"));
-        gameManager.equipments.Add(new Equipment("멤브레인 키보드", "Common", 15f, "LPS", "초당 로그 생산 +15"));
-        gameManager.equipments.Add(new Equipment("15인치 구형 CRT 모니터", "Common", 40f, "LPS", "초당 로그 생산 +40"));
+        gameManager.equipments.Add(new Equipment("E급 헌터 단검", "Common", 2f, "Click", "클릭당 마나 획득 +2"));
+        gameManager.equipments.Add(new Equipment("낡은 강철 장검", "Common", 15f, "LPS", "초당 마나 생산 +15"));
+        gameManager.equipments.Add(new Equipment("수습 마법사의 지팡이", "Common", 40f, "LPS", "초당 마나 생산 +40"));
 
         // Rare (희귀)
-        gameManager.equipments.Add(new Equipment("버티컬 마우스", "Rare", 10f, "Click", "클릭당 로그 획득 +10"));
-        gameManager.equipments.Add(new Equipment("한성 무접점 키보드", "Rare", 200f, "LPS", "초당 로그 생산 +200"));
-        gameManager.equipments.Add(new Equipment("FHD 듀얼 모니터", "Rare", 500f, "LPS", "초당 로그 생산 +500"));
+        gameManager.equipments.Add(new Equipment("D급 헌터의 장검", "Rare", 10f, "Click", "클릭당 마나 획득 +10"));
+        gameManager.equipments.Add(new Equipment("기사의 붉은 방패", "Rare", 200f, "LPS", "초당 마나 생산 +200"));
+        gameManager.equipments.Add(new Equipment("정예 저격수의 활", "Rare", 500f, "LPS", "초당 마나 생산 +500"));
 
         // Epic (에픽)
-        gameManager.equipments.Add(new Equipment("로지텍 지프로 무선", "Epic", 50f, "Click", "클릭당 로그 획득 +50"));
-        gameManager.equipments.Add(new Equipment("리얼포스 키보드", "Epic", 2000f, "LPS", "초당 로그 생산 +2,000"));
-        gameManager.equipments.Add(new Equipment("4K 울트라와이드 모니터", "Epic", 6000f, "LPS", "초당 로그 생산 +6,000"));
+        gameManager.equipments.Add(new Equipment("B급 암살자의 비수", "Epic", 50f, "Click", "클릭당 마나 획득 +50"));
+        gameManager.equipments.Add(new Equipment("하이오크 주술 보주", "Epic", 2000f, "LPS", "초당 마나 생산 +2,000"));
+        gameManager.equipments.Add(new Equipment("성기사의 영광된 갑옷", "Epic", 6000f, "LPS", "초당 마나 생산 +6,000"));
 
         // Legendary (전설)
-        gameManager.equipments.Add(new Equipment("RTX 5090 Ti 그래픽카드", "Legendary", 0.5f, "Multiplier", "서버 오버클럭/기본 배율 +50% (+0.5)"));
-        gameManager.equipments.Add(new Equipment("허먼밀러 에어론 의자", "Legendary", 1.0f, "Multiplier", "서버 전체 로그 수입 +100% (+1.0)"));
+        gameManager.equipments.Add(new Equipment("카사카의 독니", "Legendary", 0.5f, "Multiplier", "마력 오버로드/기본 배율 +50% (+0.5)"));
+        gameManager.equipments.Add(new Equipment("악마왕의 단검", "Legendary", 1.0f, "Multiplier", "그림자 영토 전체 마나 수입 +100% (+1.0)"));
     }
 
     public long GetEquipmentLPS()
@@ -151,7 +151,7 @@ public class GachaManager : MonoBehaviour
 
         if (gameManager.gachaCostText != null)
         {
-            gameManager.gachaCostText.text = $"🎰 <b>1회 뽑기</b>\nCost: {gameManager.FormatNumber(gameManager.gachaCost)} Logs";
+            gameManager.gachaCostText.text = $"🎰 <b>1회 뽑기</b>\nCost: {gameManager.FormatNumber(gameManager.gachaCost)} Mana";
             gameManager.gachaCostText.color = (gameManager.logs >= gameManager.gachaCost) ? Color.yellow : Color.red;
         }
 

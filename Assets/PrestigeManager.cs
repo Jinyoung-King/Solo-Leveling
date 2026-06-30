@@ -18,10 +18,10 @@ public class PrestigeManager : MonoBehaviour
     {
         if (gameManager == null) return;
 
-        // 최소 100만 로그는 있어야 가능
+        // 최소 100만 마나가 있어야 가능
         if (gameManager.logs < 1000000)
         {
-            gameManager.terminalManager?.AddLog("<color=red><b>[ERROR] 최소 1.00M Logs가 필요합니다!</b></color>");
+            gameManager.terminalManager?.AddLog("<color=red><b>[ERROR] 최소 1.00M Mana가 필요합니다!</b></color>");
             return;
         }
 
@@ -36,11 +36,11 @@ public class PrestigeManager : MonoBehaviour
             if (gameManager.migrationInfoText != null)
             {
                 gameManager.migrationInfoText.text =
-                    $"서버를 클라우드로 이전하시겠습니까?\n\n" +
-                    $"현재 데이터는 <color=red>초기화</color>되지만\n" +
-                    $"<color=yellow>황금 디스크 {potentialDisks}개</color>를 얻습니다.\n\n" +
+                    $"그림자 영토를 다음 차원 게이트로 이전하겠습니까?\n\n" +
+                    $"현재 그림자 군대 데이터는 <color=red>초기화</color>되지만\n" +
+                    $"<color=yellow>어둠의 징표 {potentialDisks}개</color>를 획득합니다.\n\n" +
                     $"현재 보유: {gameManager.goldenDisks}개\n" +
-                    $"총 수익 보너스: <color=green>+{(gameManager.goldenDisks + potentialDisks) * 10}%</color>";
+                    $"총 마력 보너스: <color=green>+{(gameManager.goldenDisks + potentialDisks) * 10}%</color>";
             }
         }
     }
@@ -79,7 +79,7 @@ public class PrestigeManager : MonoBehaviour
         CloseMigrationPopup();
 
         // 5. 멋진 로그 출력
-        gameManager.terminalManager?.AddLog($"<color=#00FFFF><b>=== MIGRATION COMPLETED ===</b></color>");
-        gameManager.terminalManager?.AddLog($"<color=yellow>New Bonus: +{gameManager.goldenDisks * 10}% Revenue!</color>");
+        gameManager.terminalManager?.AddLog($"<color=#00FFFF><b>=== SHADOW MIGRATION COMPLETED ===</b></color>");
+        gameManager.terminalManager?.AddLog($"<color=yellow>New Bonus: +{gameManager.goldenDisks * 10}% Mana Power!</color>");
     }
 }

@@ -112,7 +112,7 @@ public class TerminalManager : MonoBehaviour
             terminalText.raycastTarget = false;
         }
 
-        AddLog("<color=green>System initialized. Welcome to Solo Leveling Terminal!</color>");
+        AddLog("<color=green>Gate connection initialized. Welcome, Shadow Monarch!</color>");
         AddLog("Type <color=yellow>'help'</color> to see available commands.");
     }
 
@@ -209,14 +209,14 @@ public class TerminalManager : MonoBehaviour
                 AddLog("<color=yellow>=== AVAILABLE COMMANDS ===</color>");
                 AddLog("<color=cyan>help</color> - Show this help menu");
                 AddLog("<color=cyan>clear</color> - Clear terminal screen");
-                AddLog("<color=cyan>top</color> / <color=cyan>status</color> - Display server load & performance stats");
-                AddLog("<color=cyan>ps</color> / <color=cyan>ls</color> - List active tech stacks (units)");
-                AddLog("<color=cyan>ping</color> - Send a packet to test connection latency");
-                AddLog("<color=cyan>upgrade</color> - Upgrade server CPU (same as clicking CPU Upgrade)");
-                AddLog("<color=cyan>coffee</color> - Activate coffee booster (if available)");
-                AddLog("<color=cyan>bugfix</color> / <color=cyan>kill -9 bug</color> - Debug and fix active bug event");
-                AddLog("<color=cyan>buy [name]</color> - Buy a tech stack (e.g. 'buy docker', 'buy aws')");
-                AddLog("<color=cyan>gacha</color> / <color=cyan>draw</color> - Draw random equipment (Costs 50.0K+ Logs)");
+                AddLog("<color=cyan>top</color> / <color=cyan>status</color> - Display monarch status & mana stats");
+                AddLog("<color=cyan>ps</color> / <color=cyan>ls</color> - List active shadow army (units)");
+                AddLog("<color=cyan>ping</color> - Probe gate connection latency");
+                AddLog("<color=cyan>upgrade</color> - Upgrade Monarch Authority (same as Monarch Upgrade)");
+                AddLog("<color=cyan>coffee</color> - Drink caffeine potion booster (if available)");
+                AddLog("<color=cyan>bugfix</color> / <color=cyan>kill -9 bug</color> - Purge active magical beast event");
+                AddLog("<color=cyan>buy [name]</color> - Summon a shadow soldier (e.g. 'buy knight', 'buy infantry')");
+                AddLog("<color=cyan>gacha</color> / <color=cyan>draw</color> - Draw random hunter equipment (Costs 50.0K+ Mana)");
                 break;
 
             case "clear":
@@ -229,14 +229,13 @@ public class TerminalManager : MonoBehaviour
                 if (gameManager != null)
                 {
                     long currentLPS = gameManager.GetTotalRevenue();
-                    float totalMultiplier = 1f;
                     
-                    AddLog("<color=#00FF00>=== SYSTEM STATUS ===</color>");
-                    AddLog($"Server Level: <color=cyan>Lv.{gameManager.serverLevel}</color>");
-                    AddLog($"Current Logs: <color=yellow>{gameManager.logs}</color>");
-                    AddLog($"LPS (Logs/sec): <color=green>{currentLPS}/sec</color>");
+                    AddLog("<color=#00FF00>=== MONARCH STATUS ===</color>");
+                    AddLog($"Monarch Level: <color=cyan>Lv.{gameManager.serverLevel}</color>");
+                    AddLog($"Current Mana: <color=yellow>{gameManager.logs}</color>");
+                    AddLog($"MPS (Mana/sec): <color=green>{currentLPS}/sec</color>");
                     AddLog($"Golden Disks: <color=yellow>{gameManager.goldenDisks}</color>");
-                    AddLog("Type <color=cyan>'ps'</color> to check tech stack details.");
+                    AddLog("Type <color=cyan>'ps'</color> to check shadow army details.");
                 }
                 break;
 
@@ -244,7 +243,7 @@ public class TerminalManager : MonoBehaviour
             case "ls":
                 if (gameManager != null && gameManager.units != null)
                 {
-                    AddLog("<color=yellow>=== ACTIVE PROCESSES (TECH STACK) ===</color>");
+                    AddLog("<color=yellow>=== ACTIVE SHADOW ARMY ===</color>");
                     int activeCount = 0;
                     for (int i = 0; i < gameManager.units.Count; i++)
                     {
@@ -257,20 +256,19 @@ public class TerminalManager : MonoBehaviour
                     }
                     if (activeCount == 0)
                     {
-                        AddLog("<color=red>No active processes. Purchase tech stacks to start logging.</color>");
+                        AddLog("<color=red>No active shadow soldiers. Summon shadows to start harvesting mana.</color>");
                     }
                 }
                 break;
 
             case "ping":
-                // 핑 명령어로 깨알 보너스 획득 기믹
                 int latency = UnityEngine.Random.Range(5, 120);
-                AddLog($"64 bytes from 127.0.0.1: icmp_seq=1 ttl=64 time={latency}ms");
-                if (gameManager != null && UnityEngine.Random.Range(0, 10) < 2) // 20% 확률 보너스
+                AddLog($"64 bytes from gate_portal: icmp_seq=1 power={latency} mana");
+                if (gameManager != null && UnityEngine.Random.Range(0, 10) < 2)
                 {
                     long bonus = (long)(gameManager.serverLevel * 5);
                     gameManager.logs += bonus;
-                    AddLog($"<color=green>[BONUS] Packet payload hijacked: +{bonus} Logs</color>");
+                    AddLog($"<color=green>[BONUS] Mana rift harvested: +{bonus} Mana</color>");
                     gameManager.UpdateUI();
                 }
                 break;
@@ -284,7 +282,7 @@ public class TerminalManager : MonoBehaviour
                     }
                     else
                     {
-                        AddLog("<color=red>[ERROR] Insufficient Logs to upgrade CPU.</color>");
+                        AddLog("<color=red>[ERROR] Insufficient Mana to upgrade Monarch Authority.</color>");
                     }
                 }
                 break;
@@ -292,14 +290,13 @@ public class TerminalManager : MonoBehaviour
             case "coffee":
                 if (gameManager != null)
                 {
-                    // GameManager.cs 의 coffeeBtn.interactable 이 참인지 확인
                     if (gameManager.coffeeBtn != null && gameManager.coffeeBtn.interactable)
                     {
                         gameManager.ActivateCoffee();
                     }
                     else
                     {
-                        AddLog("<color=red>[ERROR] Coffee is still brewing (on cooldown).</color>");
+                        AddLog("<color=red>[ERROR] Potion is still brewing (on cooldown).</color>");
                     }
                 }
                 break;
@@ -330,7 +327,7 @@ public class TerminalManager : MonoBehaviour
             case "buy":
                 if (string.IsNullOrEmpty(arg))
                 {
-                    AddLog("Usage: buy [tech_name_part] (e.g. 'buy docker', 'buy aws')");
+                    AddLog("Usage: buy [shadow_name] (e.g. 'buy knight', 'buy infantry')");
                     break;
                 }
                 BuyTechByName(arg);
@@ -360,7 +357,7 @@ public class TerminalManager : MonoBehaviour
             }
             else
             {
-                AddLog("<color=grey>No active bugs detected in the pipeline.</color>");
+                AddLog("<color=grey>No active magical beasts detected in the gate.</color>");
             }
         }
     }
@@ -389,12 +386,12 @@ public class TerminalManager : MonoBehaviour
             }
             else
             {
-                AddLog($"<color=red>[ERROR] Insufficient logs to deploy {u.unitName}. Cost: {u.currentCost}</color>");
+                AddLog($"<color=red>[ERROR] Insufficient mana to summon {u.unitName}. Cost: {u.currentCost}</color>");
             }
         }
         else
         {
-            AddLog($"<color=red>[ERROR] Tech stack matching '{namePart}' not found.</color>");
+            AddLog($"<color=red>[ERROR] Shadow type matching '{namePart}' not found.</color>");
         }
     }
 }
