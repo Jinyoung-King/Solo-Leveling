@@ -294,7 +294,7 @@ public class AutoBuilder
             titleText.fontSize = 32;
             titleText.color = Color.yellow;
             titleText.alignment = TextAlignmentOptions.Center;
-            titleText.text = "🎰 <b>DEV EQUIPMENT GACHA</b> 🎰";
+            titleText.text = "🎰 <b>HUNTER EQUIPMENT GACHA</b> 🎰";
 
             // (2) 결과 표시 영역
             GameObject resultGo = new GameObject("Txt_Result", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -310,7 +310,7 @@ public class AutoBuilder
             resultText.fontSize = 24;
             resultText.color = Color.white;
             resultText.alignment = TextAlignmentOptions.Center;
-            resultText.text = "Logs를 소모하여\n서버 및 개발 장비를 뽑으세요!\n\n<size=80%>(1회 50,000 Logs ➔ 뽑을 때마다 상승)</size>";
+            resultText.text = "Mana를 소모하여\n헌터 무기 및 장비를 뽑으세요!\n\n<size=80%>(1회 50,000 Mana ➔ 뽑을 때마다 상승)</size>";
             gameManager.gachaResultText = resultText;
 
             // (3) 뽑기(Draw) 버튼
@@ -337,7 +337,7 @@ public class AutoBuilder
             drawBtnText.fontSize = 22;
             drawBtnText.color = Color.white;
             drawBtnText.alignment = TextAlignmentOptions.Center;
-            drawBtnText.text = "🎰 1회 뽑기\nCost: 50.0K Logs";
+            drawBtnText.text = "🎰 1회 뽑기\nCost: 50.0K Mana";
             gameManager.gachaCostText = drawBtnText;
 
             Button drawBtn = drawBtnGo.GetComponent<Button>();
