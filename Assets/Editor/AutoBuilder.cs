@@ -43,6 +43,19 @@ public class AutoBuilder
         string scenePath = "Assets/Scenes/SampleScene.unity";
         var scene = EditorSceneManager.OpenScene(scenePath);
 
+        // 0. 어플 아이콘 세팅
+        Texture2D iconTexture = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/app_icon.png");
+        if (iconTexture != null)
+        {
+            PlayerSettings.SetIconsForTargetGroup(BuildTargetGroup.Android, new Texture2D[] { iconTexture });
+            PlayerSettings.SetIconsForTargetGroup(BuildTargetGroup.Standalone, new Texture2D[] { iconTexture });
+            Debug.Log("[AutoBuilder] App Icon successfully assigned.");
+        }
+        else
+        {
+            Debug.LogWarning("[AutoBuilder] Assets/app_icon.png not found or failed to load.");
+        }
+
         TerminalManager terminalManager = Object.FindAnyObjectByType<TerminalManager>();
         if (terminalManager == null)
         {
