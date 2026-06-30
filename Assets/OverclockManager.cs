@@ -71,7 +71,8 @@ public class OverclockManager : MonoBehaviour
             gameManager.backgroundPanel.color = new Color(0.5f, 0f, 0f, 0.5f); // 붉은 반투명
         }
 
-        gameManager.terminalManager?.AddLog("<color=red><b> WARNING: SERVER OVERHEAT! (x5 Boost) </b></color>");
+        string warnStr = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("mana_overload") : " WARNING: MANA OVERLOAD! (x5 Boost) ";
+        gameManager.terminalManager?.AddLog($"<color=red><b>{warnStr}</b></color>");
 
         // 2. 지속 시간 (10초 동안 게이지가 타들어감)
         float duration = 10f;
@@ -94,7 +95,8 @@ public class OverclockManager : MonoBehaviour
         // 색깔 원상복구
         if (gameManager.backgroundPanel != null) gameManager.backgroundPanel.color = originalColor;
 
-        gameManager.terminalManager?.AddLog("<color=green>System stabilized. Cooling down...</color>");
+        string stableStr = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("mana_stabilized") : "Mana stabilized. Cooling down...";
+        gameManager.terminalManager?.AddLog($"<color=green>{stableStr}</color>");
         gameManager.UpdateUI();
     }
 }

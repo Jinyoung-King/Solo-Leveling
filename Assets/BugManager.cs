@@ -53,8 +53,8 @@ public class BugManager : MonoBehaviour
         // 3. 위치 이동
         gameManager.bugButton.GetComponent<RectTransform>().anchoredPosition = new Vector2(randX, randY);
 
-        // 4. 로그 출력
-        gameManager.terminalManager?.AddLog("<color=red><b>[ALERT] Bug detected! Catch it!</b></color>");
+        string alertStr = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("beast_detected") : "[ALERT] Magical Beast detected! Purge it!";
+        gameManager.terminalManager?.AddLog($"<color=red><b>{alertStr}</b></color>");
 
         // 5. 3초 뒤에 도망가는 로직 시작
         bugEscapeRoutine = StartCoroutine(BugEscapeRoutine());
@@ -77,8 +77,8 @@ public class BugManager : MonoBehaviour
             gameManager.logs += reward;
             gameManager.UpdateUI();
 
-            // 2. 연출
-            gameManager.terminalManager?.AddLog($"<color=green><b>BUG FIXED! Reward: +{gameManager.FormatNumber(reward)}</b></color>");
+            string fixedStr = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("beast_fixed") : "BEAST PURGED! Reward: +";
+            gameManager.terminalManager?.AddLog($"<color=green><b>{fixedStr}{gameManager.FormatNumber(reward)}</b></color>");
 
             // 3. 버그 숨기기
             if (bugEscapeRoutine != null)
@@ -96,8 +96,8 @@ public class BugManager : MonoBehaviour
 
         if (gameManager != null && gameManager.bugButton != null && gameManager.bugButton.gameObject.activeSelf)
         {
-            gameManager.bugButton.gameObject.SetActive(false); // 도망감
-            gameManager.terminalManager?.AddLog("<color=grey>Bug escaped into the server...</color>");
+            string escapeStr = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("beast_escaped") : "Beast escaped into the gate...";
+            gameManager.terminalManager?.AddLog($"<color=grey>{escapeStr}</color>");
         }
     }
 }

@@ -161,6 +161,11 @@ public class GameManager : MonoBehaviour
     {
         Application.targetFrameRate = 60;
 
+        if (FindObjectOfType<LocalizationManager>() == null)
+        {
+            gameObject.AddComponent<LocalizationManager>();
+        }
+
         // Attach and initialize sub-managers dynamically to clean concerns
         saveManager = gameObject.AddComponent<SaveManager>();
         gachaManager = gameObject.AddComponent<GachaManager>();
@@ -179,6 +184,11 @@ public class GameManager : MonoBehaviour
         GenerateTechStack();
         LoadGame();
         UpdateUI();
+        CreateLanguageButton();
+
+        // 탭 매니저 동적 생성 및 연동
+        TabManager tabManager = gameObject.AddComponent<TabManager>();
+        tabManager.Initialize(this);
     }
 
     void GenerateTechStack()
@@ -256,11 +266,16 @@ public class GameManager : MonoBehaviour
             clickProfit = (long)(clickProfit * chaosFactor);
 
             if (buttonShaker != null) buttonShaker.Shake();
-            terminalManager?.AddLog("<color=red><b>[CRITICAL] SHADOW DAMAGE!</b></color>");
+            string critStr = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("crit_shadow_damage") : "[CRITICAL] SHADOW DAMAGE!";
+            terminalManager?.AddLog($"<color=red><b>{critStr}</b></color>");
         }
         else
         {
-            if (UnityEngine.Random.Range(0, 10) < 2) terminalManager?.AddLog("<color=yellow>Mana absorbed.</color>");
+            if (UnityEngine.Random.Range(0, 10) < 2)
+            {
+                string absorbStr = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("crit_mana_absorbed") : "Mana absorbed.";
+                terminalManager?.AddLog($"<color=yellow>{absorbStr}</color>");
+            }
         }
 
         if (overclockManager != null)
@@ -312,7 +327,10 @@ public class GameManager : MonoBehaviour
             target.Buy();
             UpdateUI();
             SaveGame();
-            terminalManager?.AddLog($"<color=yellow><b>Summoned: {target.unitName}</b></color>");
+            
+            string sumPrefix = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("summoned_log") : "Summoned: ";
+            string uName = LocalizationManager.Instance != null ? LocalizationManager.Instance.GetUnitName(index) : target.unitName;
+            terminalManager?.AddLog($"<color=yellow><b>{sumPrefix}{uName}</b></color>");
         }
     }
 
@@ -325,7 +343,9 @@ public class GameManager : MonoBehaviour
             upgradeCost = (long)(upgradeCost * 2.5f);
             UpdateUI();
             SaveGame();
-            terminalManager?.AddLog($"<color=blue><b>MONARCH LEVEL UP! Lv.{serverLevel}</b></color>");
+            
+            string lvUpStr = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("monarch_level_up_log") : "MONARCH LEVEL UP! Lv.";
+            terminalManager?.AddLog($"<color=blue><b>{lvUpStr}{serverLevel}</b></color>");
         }
     }
 
@@ -347,7 +367,10 @@ public class GameManager : MonoBehaviour
     {
         if (rewardPopup != null && rewardMessage != null)
         {
-            rewardMessage.text = $"[그림자 영토 탐색 리포트]\n\n지난 {seconds:F0}초 동안\n그림자 군대가 게이트를 돌아서\n\n<color=yellow>+{FormatNumber(reward)} Mana</color>\n를 수집했습니다!";
+            string title = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("offline_popup_title") : "[그림자 영토 탐색 리포트]";
+            string descFormat = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("offline_popup_desc") : "지난 {0:F0}초 동안\n그림자 군대가 게이트를 돌아서\n\n<color=yellow>+{1} Mana</color>\n를 수집했습니다!";
+            
+            rewardMessage.text = $"{title}\n\n" + string.Format(descFormat, seconds, FormatNumber(reward));
             rewardPopup.SetActive(true);
             rewardPopup.transform.SetAsLastSibling();
         }
@@ -394,9 +417,11 @@ public class GameManager : MonoBehaviour
 
     public void UpdateUI()
     {
+        string manaLabel = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("mana") : "Mana";
+
         if (scoreText != null)
         {
-            scoreText.text = $"{FormatNumber(logs)} <size=70%>Mana</size>";
+            scoreText.text = $"{FormatNumber(logs)} <size=70%>{manaLabel}</size>";
             scoreText.color = IsCoffeeActive ? Color.yellow : Color.green;
         }
 
@@ -404,15 +429,20 @@ public class GameManager : MonoBehaviour
         {
             long currentLPS = GetTotalRevenue();
             float totalMultiplier = GetTotalMultiplier();
+            
+            string marksLabel = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("marks_label") : "Disk";
+            string boostLabel = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("boost_label") : "Current Boost";
+
             myInfoText.text = 
                 $"<color=#00FF00>⚡ {FormatNumber(currentLPS)} /sec</color>\n" +
-                $"<color=#FFD700>💾 Disk: {goldenDisks}</color> | <color=#00FFFF>💻 Lv.{serverLevel}</color>\n" +
-                $"<size=80%>(Current Boost: <color=orange>x{totalMultiplier:F1}</color>)</size>";
+                $"<color=#FFD700>💾 {marksLabel}: {goldenDisks}</color> | <color=#00FFFF>💻 Lv.{serverLevel}</color>\n" +
+                $"<size=80%>({boostLabel}: <color=orange>x{totalMultiplier:F1}</color>)</size>";
         }
 
         if (upgradeText != null)
         {
-            upgradeText.text = $"<b>Monarch Upgrade (Lv.{serverLevel})</b>\nCost: {FormatNumber(upgradeCost)}";
+            string upLabel = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("monarch_upgrade") : "Monarch Upgrade";
+            upgradeText.text = $"<b>{upLabel} (Lv.{serverLevel})</b>\nCost: {FormatNumber(upgradeCost)}";
             upgradeText.color = (logs >= upgradeCost) ? Color.cyan : Color.red;
         }
 
@@ -424,8 +454,10 @@ public class GameManager : MonoBehaviour
                 {
                     Unit u = units[i];
                     string colorHex = (logs >= u.currentCost) ? "#00FF00" : "#FF0000";
+                    string uName = LocalizationManager.Instance != null ? LocalizationManager.Instance.GetUnitName(i) : u.unitName;
+                    
                     generatedButtonTexts[i].text =
-                        $"<b>{u.unitName}</b> <color=orange>Lv.{u.count}</color>\n" +
+                        $"<b>{uName}</b> <color=orange>Lv.{u.count}</color>\n" +
                         $"<size=80%>{FormatNumber(u.revenuePerSec)} /sec</size>\n" +
                         $"<color={colorHex}>Cost: {FormatNumber(u.currentCost)}</color>";
                 }
@@ -459,5 +491,64 @@ public class GameManager : MonoBehaviour
         if (gachaManager != null) gachaManager.InitializeEquipments();
         UpdateUI();
         terminalManager?.AddLog("[INFO] <color=red><b>SYSTEM RESET COMPLETED.</b></color>");
+    }
+
+    void CreateLanguageButton()
+    {
+        Canvas canvas = GetComponentInParent<Canvas>();
+        if (canvas == null) return;
+
+        // Check if button already exists
+        Button existing = null;
+        Button[] btns = canvas.GetComponentsInChildren<Button>(true);
+        foreach (var b in btns)
+        {
+            if (b.gameObject.name == "Btn_Language")
+            {
+                existing = b;
+                break;
+            }
+        }
+        if (existing != null) return;
+
+        GameObject langBtnGo = new GameObject("Btn_Language", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+        langBtnGo.transform.SetParent(canvas.transform, false);
+
+        RectTransform rect = langBtnGo.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(1, 1);
+        rect.anchorMax = new Vector2(1, 1);
+        rect.pivot = new Vector2(1, 1);
+        rect.anchoredPosition = new Vector2(-20, -20); // 우측 상단 배치
+        rect.sizeDelta = new Vector2(120, 60);
+
+        Image img = langBtnGo.GetComponent<Image>();
+        img.color = new Color(0.15f, 0.15f, 0.15f, 0.9f);
+
+        GameObject textGo = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+        textGo.transform.SetParent(langBtnGo.transform, false);
+        RectTransform textRect = textGo.GetComponent<RectTransform>();
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.sizeDelta = Vector2.zero;
+
+        TextMeshProUGUI txt = textGo.GetComponent<TextMeshProUGUI>();
+        txt.fontSize = 16;
+        txt.color = Color.white;
+        txt.alignment = TextAlignmentOptions.Center;
+        
+        // 폰트 상속
+        if (scoreText != null) txt.font = scoreText.font;
+
+        Button btn = langBtnGo.GetComponent<Button>();
+        btn.onClick.AddListener(() => {
+            if (LocalizationManager.Instance != null)
+            {
+                Language next = LocalizationManager.Instance.CurrentLanguage == Language.Korean ? Language.English : Language.Korean;
+                LocalizationManager.Instance.SetLanguage(next);
+                txt.text = LocalizationManager.Instance.CurrentLanguage == Language.Korean ? "KR / EN" : "EN / KR";
+            }
+        });
+
+        txt.text = (LocalizationManager.Instance != null && LocalizationManager.Instance.CurrentLanguage == Language.Korean) ? "KR / EN" : "EN / KR";
     }
 }

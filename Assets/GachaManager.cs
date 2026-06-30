@@ -98,7 +98,8 @@ public class GachaManager : MonoBehaviour
 
         if (gameManager.logs < gameManager.gachaCost)
         {
-            gameManager.terminalManager?.AddLog("<color=red>[ERROR] 가차 비용이 부족합니다!</color>");
+            string errStr = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("insufficient_mana_gacha") : "[ERROR] 가차 비용이 부족합니다!";
+            gameManager.terminalManager?.AddLog($"<color=red>{errStr}</color>");
             return;
         }
 
@@ -130,13 +131,26 @@ public class GachaManager : MonoBehaviour
         else if (drawn.rarity == "Epic") rarityColor = "#1E90FF";
         else if (drawn.rarity == "Legendary") rarityColor = "#FFD700";
 
+        // 로컬라이즈 이름/효과 가져오기
+        string localName = LocalizationManager.Instance != null ? LocalizationManager.Instance.GetEquipmentName(drawn.equipName) : drawn.equipName;
+        string localDesc = LocalizationManager.Instance != null ? LocalizationManager.Instance.GetEquipmentDesc(drawn.equipName, drawn.bonusType, drawn.statBonus) : drawn.description;
+
         // 터미널 피드백
-        gameManager.terminalManager?.AddLog($"🎰 <color=yellow><b>[GACHA]</b></color> <color={rarityColor}><b>[{drawn.rarity}] {drawn.equipName}</b></color> 획득! (현재 Lv.{drawn.level})");
-        gameManager.terminalManager?.AddLog($"   └ 효과: {drawn.description}");
+        if (LocalizationManager.Instance != null && LocalizationManager.Instance.CurrentLanguage == Language.English)
+        {
+            gameManager.terminalManager?.AddLog($"🎰 <color=yellow><b>[GACHA]</b></color> Obtained <color={rarityColor}><b>[{drawn.rarity}] {localName}</b></color>! (Lv.{drawn.level})");
+            gameManager.terminalManager?.AddLog($"   └ Effect: {localDesc}");
+        }
+        else
+        {
+            gameManager.terminalManager?.AddLog($"🎰 <color=yellow><b>[GACHA]</b></color> <color={rarityColor}><b>[{drawn.rarity}] {localName}</b></color> 획득! (현재 Lv.{drawn.level})");
+            gameManager.terminalManager?.AddLog($"   └ 효과: {localDesc}");
+        }
 
         if (gameManager.gachaResultText != null)
         {
-            gameManager.gachaResultText.text = $"🎰 <color={rarityColor}><b>[{drawn.rarity}]</b></color> 획득!\n<size=120%><b>{drawn.equipName}</b></size>\n\n<size=80%>{drawn.description}</size>";
+            string drawTitle = LocalizationManager.Instance != null ? (LocalizationManager.Instance.CurrentLanguage == Language.English ? "Obtained!" : "획득!") : "획득!";
+            gameManager.gachaResultText.text = $"🎰 <color={rarityColor}><b>[{drawn.rarity}]</b></color> {drawTitle}\n<size=120%><b>{localName}</b></size>\n\n<size=80%>{localDesc}</size>";
         }
 
         if (gameManager.buttonShaker != null && drawn.rarity == "Legendary")
@@ -149,16 +163,20 @@ public class GachaManager : MonoBehaviour
     {
         if (gameManager == null) return;
 
+        string suffix = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("mana") : "Mana";
+        string drawBtnLabel = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("gacha_draw_btn") : "🎰 1회 뽑기";
+
         if (gameManager.gachaCostText != null)
         {
-            gameManager.gachaCostText.text = $"🎰 <b>1회 뽑기</b>\nCost: {gameManager.FormatNumber(gameManager.gachaCost)} Mana";
+            gameManager.gachaCostText.text = $"{drawBtnLabel}\nCost: {gameManager.FormatNumber(gameManager.gachaCost)} {suffix}";
             gameManager.gachaCostText.color = (gameManager.logs >= gameManager.gachaCost) ? Color.yellow : Color.red;
         }
 
         if (gameManager.equipmentListText != null && gameManager.equipments != null)
         {
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
-            sb.AppendLine("<color=yellow>=== 보유 장비 목록 (도감) ===</color>");
+            string bookTitle = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("gacha_book_title") : "=== 보유 장비 목록 (도감) ===";
+            sb.AppendLine(bookTitle);
             foreach (var eq in gameManager.equipments)
             {
                 string rarityColor = "#FFFFFF";
@@ -166,8 +184,14 @@ public class GachaManager : MonoBehaviour
                 else if (eq.rarity == "Epic") rarityColor = "#1E90FF";
                 else if (eq.rarity == "Legendary") rarityColor = "#FFD700";
 
-                sb.AppendLine($"<color={rarityColor}>[{eq.rarity}]</color> {eq.equipName} <color=orange>Lv.{eq.level}</color>");
-                sb.AppendLine($"<size=85%>{eq.description} (합계: +{eq.statBonus * eq.level:F1})</size>");
+                string eqName = LocalizationManager.Instance != null ? LocalizationManager.Instance.GetEquipmentName(eq.equipName) : eq.equipName;
+                string eqDesc = LocalizationManager.Instance != null ? LocalizationManager.Instance.GetEquipmentDesc(eq.equipName, eq.bonusType, eq.statBonus) : eq.description;
+
+                string lvPrefix = LocalizationManager.Instance != null ? (LocalizationManager.Instance.CurrentLanguage == Language.English ? "Lv." : "Lv.") : "Lv.";
+                string sumLabel = LocalizationManager.Instance != null ? (LocalizationManager.Instance.CurrentLanguage == Language.English ? "Total: +" : "합계: +") : "합계: +";
+
+                sb.AppendLine($"<color={rarityColor}>[{eq.rarity}]</color> {eqName} <color=orange>{lvPrefix}{eq.level}</color>");
+                sb.AppendLine($"<size=85%>{eqDesc} ({sumLabel}{eq.statBonus * eq.level:F1})</size>");
             }
             gameManager.equipmentListText.text = sb.ToString();
         }

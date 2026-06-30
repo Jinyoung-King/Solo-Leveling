@@ -1,0 +1,225 @@
+using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
+using System.Collections.Generic;
+
+public class TabManager : MonoBehaviour
+{
+    private GameManager gameManager;
+
+    private GameObject tabGroupPortal;
+    private GameObject tabGroupShop;
+    private GameObject tabGroupGacha;
+    private GameObject tabGroupStatus;
+
+    private List<Button> tabButtons = new List<Button>();
+    private List<TextMeshProUGUI> tabTexts = new List<TextMeshProUGUI>();
+
+    public int ActiveTab { get; private set; } = 0; // 0: Portal, 1: Army, 2: Gacha, 3: Status
+
+    public void Initialize(GameManager gm)
+    {
+        gameManager = gm;
+
+        // 1. Group existing components
+        // (1) Portal Group
+        tabGroupPortal = new GameObject("TabGroup_Portal");
+        tabGroupPortal.transform.SetParent(gameManager.transform.parent, false);
+        
+        if (gameManager.serverButtonTr != null) gameManager.serverButtonTr.SetParent(tabGroupPortal.transform, true);
+        if (gameManager.coffeeBtn != null) gameManager.coffeeBtn.transform.SetParent(tabGroupPortal.transform, true);
+        if (gameManager.coffeeSlider != null) gameManager.coffeeSlider.transform.SetParent(tabGroupPortal.transform, true);
+        if (gameManager.heatSlider != null) gameManager.heatSlider.transform.SetParent(tabGroupPortal.transform, true);
+
+        // (2) Shop Group (Scroll View containing shopContent)
+        tabGroupShop = new GameObject("TabGroup_Shop");
+        tabGroupShop.transform.SetParent(gameManager.transform.parent, false);
+        if (gameManager.shopContent != null)
+        {
+            Transform scrollView = gameManager.shopContent.parent.parent; // Scroll View
+            scrollView.SetParent(tabGroupShop.transform, true);
+        }
+
+        // (3) Gacha Group
+        tabGroupGacha = new GameObject("TabGroup_Gacha");
+        tabGroupGacha.transform.SetParent(gameManager.transform.parent, false);
+        if (gameManager.gachaPanel != null)
+        {
+            gameManager.gachaPanel.transform.SetParent(tabGroupGacha.transform, true);
+        }
+
+        // (4) Status Group
+        tabGroupStatus = new GameObject("TabGroup_Status");
+        tabGroupStatus.transform.SetParent(gameManager.transform.parent, false);
+        
+        if (gameManager.migrationPanel != null)
+        {
+            gameManager.migrationPanel.transform.SetParent(tabGroupStatus.transform, true);
+        }
+        if (gameManager.upgradeButton != null)
+        {
+            gameManager.upgradeButton.transform.SetParent(tabGroupStatus.transform, true);
+        }
+
+        // 2. Create the Bottom Tab Bar
+        CreateTabBar();
+
+        // 3. Set default active tab (Portal)
+        SwitchTab(0);
+    }
+
+    private void CreateTabBar()
+    {
+        Canvas canvas = gameManager.GetComponentInParent<Canvas>();
+        if (canvas == null) return;
+
+        // Bottom Tab Panel
+        GameObject tabBarGo = new GameObject("Panel_TabBar", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        tabBarGo.transform.SetParent(canvas.transform, false);
+
+        RectTransform barRect = tabBarGo.GetComponent<RectTransform>();
+        barRect.anchorMin = new Vector2(0, 0);
+        barRect.anchorMax = new Vector2(1, 0);
+        barRect.pivot = new Vector2(0.5f, 0);
+        barRect.anchoredPosition = Vector2.zero;
+        barRect.sizeDelta = new Vector2(0, 120); // 120px height
+
+        Image barImg = tabBarGo.GetComponent<Image>();
+        barImg.color = new Color(0.08f, 0.08f, 0.12f, 0.95f); // Sleek dark gray
+
+        float buttonWidth = 1f / 4f;
+
+        for (int i = 0; i < 4; i++)
+        {
+            GameObject btnGo = new GameObject($"Btn_Tab_{i}", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
+            btnGo.transform.SetParent(tabBarGo.transform, false);
+
+            RectTransform btnRect = btnGo.GetComponent<RectTransform>();
+            btnRect.anchorMin = new Vector2(i * buttonWidth, 0);
+            btnRect.anchorMax = new Vector2((i + 1) * buttonWidth, 1);
+            btnRect.pivot = new Vector2(0.5f, 0.5f);
+            btnRect.offsetMin = new Vector2(10, 10);
+            btnRect.offsetMax = new Vector2(-10, -10);
+
+            Image btnImg = btnGo.GetComponent<Image>();
+            btnImg.color = new Color(0.15f, 0.15f, 0.2f, 0.6f);
+
+            GameObject textGo = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+            textGo.transform.SetParent(btnGo.transform, false);
+            RectTransform textRect = textGo.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+            textRect.sizeDelta = Vector2.zero;
+
+            TextMeshProUGUI txt = textGo.GetComponent<TextMeshProUGUI>();
+            txt.fontSize = 20;
+            txt.color = Color.white;
+            txt.alignment = TextAlignmentOptions.Center;
+            if (gameManager.scoreText != null) txt.font = gameManager.scoreText.font;
+
+            int tabIndex = i;
+            Button btn = btnGo.GetComponent<Button>();
+            btn.onClick.AddListener(() => SwitchTab(tabIndex));
+
+            tabButtons.Add(btn);
+            tabTexts.Add(txt);
+        }
+
+        UpdateTabLabels();
+    }
+
+    public void UpdateTabLabels()
+    {
+        if (tabTexts.Count < 4) return;
+
+        bool isEnglish = LocalizationManager.Instance != null && LocalizationManager.Instance.CurrentLanguage == Language.English;
+        string[] names = isEnglish ? new[] { "Gate", "Army", "Armory", "Monarch" } : new[] { "게이트", "그림자", "무기고", "군주 정보" };
+
+        for (int i = 0; i < 4; i++)
+        {
+            tabTexts[i].text = names[i];
+        }
+    }
+
+    public void SwitchTab(int index)
+    {
+        ActiveTab = index;
+
+        // Toggle visibility of each group
+        tabGroupPortal.SetActive(index == 0);
+        tabGroupShop.SetActive(index == 1);
+        tabGroupGacha.SetActive(index == 2);
+        tabGroupStatus.SetActive(index == 3);
+
+        // Visual feedback for active button
+        for (int i = 0; i < tabButtons.Count; i++)
+        {
+            Image img = tabButtons[i].GetComponent<Image>();
+            if (i == index)
+            {
+                img.color = new Color(0.1f, 0.4f, 0.8f, 0.9f); // Bright blue for active tab
+                tabTexts[i].color = Color.yellow;
+            }
+            else
+            {
+                img.color = new Color(0.15f, 0.15f, 0.2f, 0.6f); // Dark gray for inactive
+                tabTexts[i].color = Color.white;
+            }
+        }
+
+        // Special configurations per tab
+        if (index == 2)
+        {
+            if (gameManager.gachaPanel != null)
+            {
+                gameManager.gachaPanel.SetActive(true);
+                gameManager.UpdateGachaUI();
+            }
+        }
+        else
+        {
+            if (gameManager.gachaPanel != null)
+            {
+                gameManager.gachaPanel.SetActive(false);
+            }
+        }
+
+        if (index == 3)
+        {
+            if (gameManager.migrationPanel != null)
+            {
+                gameManager.migrationPanel.SetActive(true);
+                
+                RectTransform mRect = gameManager.migrationPanel.GetComponent<RectTransform>();
+                mRect.anchorMin = new Vector2(0.5f, 0.5f);
+                mRect.anchorMax = new Vector2(0.5f, 0.5f);
+                mRect.pivot = new Vector2(0.5f, 0.5f);
+                mRect.anchoredPosition = new Vector2(0, 100);
+                mRect.sizeDelta = new Vector2(800, 700);
+
+                if (gameManager.migrationInfoText != null)
+                {
+                    int potentialDisks = (int)Mathf.Sqrt(gameManager.logs / 1000000f);
+                    string formatStr = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("prestige_popup_desc") : "그림자 영토를 다음 차원 게이트로 이전하겠습니까?\n\n현재 그림자 군대 데이터는 초기화되지만 어둠의 징표 {0}개를 획득합니다.\n\n현재 보유: {1}개\n총 마력 보너스: +{2}%";
+                    gameManager.migrationInfoText.text = string.Format(formatStr, potentialDisks, gameManager.goldenDisks, (gameManager.goldenDisks + potentialDisks) * 10);
+                }
+            }
+            if (gameManager.upgradeButton != null)
+            {
+                RectTransform uRect = gameManager.upgradeButton.GetComponent<RectTransform>();
+                uRect.anchorMin = new Vector2(0.5f, 0);
+                uRect.anchorMax = new Vector2(0.5f, 0);
+                uRect.pivot = new Vector2(0.5f, 0);
+                uRect.anchoredPosition = new Vector2(0, 200);
+                uRect.sizeDelta = new Vector2(500, 120);
+            }
+        }
+        else
+        {
+            if (gameManager.migrationPanel != null)
+            {
+                gameManager.migrationPanel.SetActive(false);
+            }
+        }
+    }
+}

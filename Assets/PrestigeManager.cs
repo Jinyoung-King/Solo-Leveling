@@ -21,7 +21,8 @@ public class PrestigeManager : MonoBehaviour
         // 최소 100만 마나가 있어야 가능
         if (gameManager.logs < 1000000)
         {
-            gameManager.terminalManager?.AddLog("<color=red><b>[ERROR] 최소 1.00M Mana가 필요합니다!</b></color>");
+            string limitStr = LocalizationManager.Instance != null ? (LocalizationManager.Instance.CurrentLanguage == Language.English ? "[ERROR] Requires at least 1.00M Mana!" : "[ERROR] 최소 1.00M 마나가 필요합니다!") : "[ERROR] 최소 1.00M 마나가 필요합니다!";
+            gameManager.terminalManager?.AddLog($"<color=red><b>{limitStr}</b></color>");
             return;
         }
 
@@ -35,12 +36,8 @@ public class PrestigeManager : MonoBehaviour
 
             if (gameManager.migrationInfoText != null)
             {
-                gameManager.migrationInfoText.text =
-                    $"그림자 영토를 다음 차원 게이트로 이전하겠습니까?\n\n" +
-                    $"현재 그림자 군대 데이터는 <color=red>초기화</color>되지만\n" +
-                    $"<color=yellow>어둠의 징표 {potentialDisks}개</color>를 획득합니다.\n\n" +
-                    $"현재 보유: {gameManager.goldenDisks}개\n" +
-                    $"총 마력 보너스: <color=green>+{(gameManager.goldenDisks + potentialDisks) * 10}%</color>";
+                string formatStr = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("prestige_popup_desc") : "그림자 영토를 다음 차원 게이트로 이전하겠습니까?\n\n현재 그림자 군대 데이터는 초기화되지만 어둠의 징표 {0}개를 획득합니다.\n\n현재 보유: {1}개\n총 마력 보너스: +{2}%";
+                gameManager.migrationInfoText.text = string.Format(formatStr, potentialDisks, gameManager.goldenDisks, (gameManager.goldenDisks + potentialDisks) * 10);
             }
         }
     }
@@ -79,7 +76,10 @@ public class PrestigeManager : MonoBehaviour
         CloseMigrationPopup();
 
         // 5. 멋진 로그 출력
-        gameManager.terminalManager?.AddLog($"<color=#00FFFF><b>=== SHADOW MIGRATION COMPLETED ===</b></color>");
-        gameManager.terminalManager?.AddLog($"<color=yellow>New Bonus: +{gameManager.goldenDisks * 10}% Mana Power!</color>");
+        string compStr = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("prestige_completed_log") : "=== SHADOW MIGRATION COMPLETED ===";
+        string bonusStr = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("prestige_bonus_log") : "New Bonus: +{0}% Mana Power!";
+        
+        gameManager.terminalManager?.AddLog($"<color=#00FFFF><b>{compStr}</b></color>");
+        gameManager.terminalManager?.AddLog($"<color=yellow>{string.Format(bonusStr, gameManager.goldenDisks * 10)}</color>");
     }
 }
