@@ -17,14 +17,28 @@ public class TabManager : MonoBehaviour
 
     public int ActiveTab { get; private set; } = 0; // 0: Portal, 1: Army, 2: Gacha, 3: Status
 
+    private GameObject CreateTabGroup(string name)
+    {
+        GameObject go = new GameObject(name, typeof(RectTransform));
+        go.transform.SetParent(gameManager.transform.parent, false);
+        
+        RectTransform rect = go.GetComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+        
+        return go;
+    }
+
     public void Initialize(GameManager gm)
     {
         gameManager = gm;
 
         // 1. Group existing components
         // (1) Portal Group
-        tabGroupPortal = new GameObject("TabGroup_Portal");
-        tabGroupPortal.transform.SetParent(gameManager.transform.parent, false);
+        tabGroupPortal = CreateTabGroup("TabGroup_Portal");
         
         if (gameManager.serverButtonTr != null) gameManager.serverButtonTr.SetParent(tabGroupPortal.transform, true);
         if (gameManager.coffeeBtn != null) gameManager.coffeeBtn.transform.SetParent(tabGroupPortal.transform, true);
@@ -32,8 +46,7 @@ public class TabManager : MonoBehaviour
         if (gameManager.heatSlider != null) gameManager.heatSlider.transform.SetParent(tabGroupPortal.transform, true);
 
         // (2) Shop Group (Scroll View containing shopContent)
-        tabGroupShop = new GameObject("TabGroup_Shop");
-        tabGroupShop.transform.SetParent(gameManager.transform.parent, false);
+        tabGroupShop = CreateTabGroup("TabGroup_Shop");
         if (gameManager.shopContent != null)
         {
             Transform scrollView = gameManager.shopContent.parent.parent; // Scroll View
@@ -41,16 +54,14 @@ public class TabManager : MonoBehaviour
         }
 
         // (3) Gacha Group
-        tabGroupGacha = new GameObject("TabGroup_Gacha");
-        tabGroupGacha.transform.SetParent(gameManager.transform.parent, false);
+        tabGroupGacha = CreateTabGroup("TabGroup_Gacha");
         if (gameManager.gachaPanel != null)
         {
             gameManager.gachaPanel.transform.SetParent(tabGroupGacha.transform, true);
         }
 
         // (4) Status Group
-        tabGroupStatus = new GameObject("TabGroup_Status");
-        tabGroupStatus.transform.SetParent(gameManager.transform.parent, false);
+        tabGroupStatus = CreateTabGroup("TabGroup_Status");
         
         if (gameManager.migrationPanel != null)
         {
@@ -83,6 +94,8 @@ public class TabManager : MonoBehaviour
         barRect.pivot = new Vector2(0.5f, 0);
         barRect.anchoredPosition = Vector2.zero;
         barRect.sizeDelta = new Vector2(0, 120); // 120px height
+        barRect.offsetMin = new Vector2(0, 0);
+        barRect.offsetMax = new Vector2(0, 120);
 
         Image barImg = tabBarGo.GetComponent<Image>();
         barImg.color = new Color(0.08f, 0.08f, 0.12f, 0.95f); // Sleek dark gray
