@@ -4,6 +4,7 @@ using UnityEditor.SceneManagement;
 using TMPro;
 using UnityEngine.UI;
 using System.IO;
+using System.Collections.Generic;
 
 [InitializeOnLoad]
 public class AutoBuilder
@@ -55,6 +56,9 @@ public class AutoBuilder
         {
             Debug.LogWarning("[AutoBuilder] Assets/app_icon.png not found or failed to load.");
         }
+
+        // 0-2. 한글/이모지 글리프를 폰트 아틀라스에 미리 구워넣어 두부문자(□) 방지
+        BakeFontGlyphs();
 
         TerminalManager terminalManager = Object.FindAnyObjectByType<TerminalManager>();
         if (terminalManager == null)
@@ -269,6 +273,96 @@ public class AutoBuilder
         }
     }
 
+    // 프로젝트의 모든 .cs 소스에 등장하는 한글/기호/이모지 글자를 폰트 아틀라스에 정적으로 구워넣습니다.
+    // Pretendard SDF는 기본적으로 런타임 동적 생성(Dynamic)이고 ClearDynamicDataOnBuild=true 라서
+    // 빌드 시 글리프가 비워지고, 안드로이드 런타임 생성이 실패하면 한글이 전부 □(두부문자)가 됩니다.
+    // 실제 사용 글자를 미리 베이크하고 clear-on-build 를 끄면 런타임 생성 없이도 확실히 렌더링됩니다.
+    public static void BakeFontGlyphs()
+    {
+        try
+        {
+            HashSet<char> hangul = new HashSet<char>();
+            HashSet<int> seenSymbol = new HashSet<int>();
+            System.Text.StringBuilder symbolSb = new System.Text.StringBuilder();
+
+            string assetsDir = Path.Combine(Directory.GetCurrentDirectory(), "Assets");
+            string[] csFiles = Directory.GetFiles(assetsDir, "*.cs", SearchOption.AllDirectories);
+            foreach (string file in csFiles)
+            {
+                string content;
+                try { content = File.ReadAllText(file); } catch { continue; }
+
+                // 서로게이트 페어(이모지) 대응을 위해 텍스트 요소 단위로 순회
+                System.Globalization.TextElementEnumerator te = System.Globalization.StringInfo.GetTextElementEnumerator(content);
+                while (te.MoveNext())
+                {
+                    string el = te.GetTextElement();
+                    int cp = char.ConvertToUtf32(el, 0);
+                    if ((cp >= 0xAC00 && cp <= 0xD7A3) || (cp >= 0x1100 && cp <= 0x11FF) || (cp >= 0x3130 && cp <= 0x318F))
+                    {
+                        hangul.Add(el[0]); // BMP 한글
+                    }
+                    else if (cp >= 0x2190) // 화살표/기호/이모지 등
+                    {
+                        if (seenSymbol.Add(cp)) symbolSb.Append(el);
+                    }
+                }
+            }
+
+            // ASCII 인쇄 가능 문자 + 한글 + 자주 쓰는 한글 문장부호를 Pretendard 에 베이크
+            System.Text.StringBuilder krSb = new System.Text.StringBuilder();
+            for (int c = 0x20; c < 0x7F; c++) krSb.Append((char)c);
+            foreach (char c in hangul) krSb.Append(c);
+            foreach (char c in "…·※★☆♥♡◆■□▶◀") krSb.Append(c);
+
+            BakeCharactersInto("Assets/TextMesh Pro/Fonts/Pretendard-Regular SDF.asset", krSb.ToString());
+            if (symbolSb.Length > 0)
+            {
+                BakeCharactersInto("Assets/TextMesh Pro/Fonts/seguiemj SDF.asset", symbolSb.ToString());
+            }
+
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[AutoBuilder] Font baking complete. Hangul={hangul.Count}, Symbols/Emoji={seenSymbol.Count}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError("[AutoBuilder] Font baking failed: " + e.Message + "\n" + e.StackTrace);
+        }
+    }
+
+    private static void BakeCharactersInto(string assetPath, string characters)
+    {
+        TMP_FontAsset font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(assetPath);
+        if (font == null)
+        {
+            Debug.LogWarning("[AutoBuilder] Font asset not found: " + assetPath);
+            return;
+        }
+
+        // 멀티 아틀라스 허용(글리프가 많아도 여러 텍스처로 확장) + 빌드 시 데이터 유지
+        SerializedObject so = new SerializedObject(font);
+        SerializedProperty multi = so.FindProperty("m_IsMultiAtlasTexturesEnabled");
+        if (multi != null) multi.boolValue = true;
+        SerializedProperty clear = so.FindProperty("m_ClearDynamicDataOnBuild");
+        if (clear != null) clear.boolValue = false;
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        string missing;
+        bool ok = font.TryAddCharacters(characters, out missing);
+        int missingCount = string.IsNullOrEmpty(missing) ? 0 : missing.Length;
+        Debug.Log($"[AutoBuilder] Baked into {Path.GetFileName(assetPath)}: ok={ok}, missing={missingCount}");
+
+        EditorUtility.SetDirty(font);
+        if (font.atlasTextures != null)
+        {
+            foreach (var tex in font.atlasTextures)
+            {
+                if (tex != null) EditorUtility.SetDirty(tex);
+            }
+        }
+        if (font.material != null) EditorUtility.SetDirty(font.material);
+    }
+
     public static void SetupGachaUI(GameManager gameManager)
     {
         if (gameManager == null) return;
@@ -278,6 +372,18 @@ public class AutoBuilder
         Canvas canvas = gameManager.GetComponentInParent<Canvas>();
         if (canvas == null) canvas = Object.FindAnyObjectByType<Canvas>();
         if (canvas == null) return;
+
+        // 이전 빌드에서 생성된 가차 UI를 제거하고 항상 최신 소스 문자열로 재생성 (이모지 제거 등 반영)
+        List<GameObject> stale = new List<GameObject>();
+        foreach (Transform t in canvas.GetComponentsInChildren<Transform>(true))
+        {
+            if (t != null && (t.name == "Panel_Gacha" || t.name == "Btn_Open_Gacha"))
+            {
+                stale.Add(t.gameObject);
+            }
+        }
+        foreach (var go in stale) { if (go != null) Object.DestroyImmediate(go); }
+        gameManager.gachaPanel = null;
 
         // 1. Gacha 메인 팝업 패널 생성
         if (gameManager.gachaPanel == null)
@@ -310,7 +416,7 @@ public class AutoBuilder
             titleText.fontSize = 32;
             titleText.color = Color.yellow;
             titleText.alignment = TextAlignmentOptions.Center;
-            titleText.text = "🎰 <b>HUNTER EQUIPMENT GACHA</b> 🎰";
+            titleText.text = "★ <b>HUNTER EQUIPMENT GACHA</b> ★";
 
             // (2) 결과 표시 영역
             GameObject resultGo = new GameObject("Txt_Result", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -326,7 +432,7 @@ public class AutoBuilder
             resultText.fontSize = 24;
             resultText.color = Color.white;
             resultText.alignment = TextAlignmentOptions.Center;
-            resultText.text = "Mana를 소모하여\n헌터 무기 및 장비를 뽑으세요!\n\n<size=80%>(1회 50,000 Mana ➔ 뽑을 때마다 상승)</size>";
+            resultText.text = "Mana를 소모하여\n헌터 무기 및 장비를 뽑으세요!\n\n<size=80%>(1회 50,000 Mana -> 뽑을 때마다 상승)</size>";
             gameManager.gachaResultText = resultText;
 
             // (3) 뽑기(Draw) 버튼
@@ -353,7 +459,7 @@ public class AutoBuilder
             drawBtnText.fontSize = 22;
             drawBtnText.color = Color.white;
             drawBtnText.alignment = TextAlignmentOptions.Center;
-            drawBtnText.text = "🎰 1회 뽑기\nCost: 50.0K Mana";
+            drawBtnText.text = "★ 1회 뽑기\nCost: 50.0K Mana";
             gameManager.gachaCostText = drawBtnText;
 
             Button drawBtn = drawBtnGo.GetComponent<Button>();
@@ -460,7 +566,7 @@ public class AutoBuilder
             openTxt.fontSize = 18;
             openTxt.color = Color.white;
             openTxt.alignment = TextAlignmentOptions.Center;
-            openTxt.text = "🎰 GACHA";
+            openTxt.text = "★ GACHA";
             openTxt.fontStyle = FontStyles.Bold;
 
             TerminalManager tm = Object.FindAnyObjectByType<TerminalManager>();

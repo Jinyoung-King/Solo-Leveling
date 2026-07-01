@@ -11,7 +11,12 @@ public class TerminalManager : MonoBehaviour
     public GameManager gameManager;   // [추가] 게임 매니저 참조
 
     private List<string> logLines = new List<string>();
-    private int maxLines = 28; // 최대 28줄까지만 표시
+    private int maxLines = 4; // 작은 메시지 박스: 최근 4줄만 표시
+
+    // 작은 메시지 박스(토스트) 표현용
+    private CanvasGroup messageBoxGroup;
+    private float lastMessageTime;
+    private const float MessageDisplayDuration = 5f; // 표시 후 서서히 사라지기까지의 시간(초)
 
     void Start()
     {
@@ -25,124 +30,104 @@ public class TerminalManager : MonoBehaviour
             inputField = GetComponentInChildren<TMP_InputField>();
         }
 
-        if (inputField != null)
-        {
-            // 엔터키를 눌렀을 때 실행될 리스너 추가
-            inputField.onSubmit.AddListener(OnSubmitInput);
-            
-            // 시작할 때 입력창 활성화 (모바일 즉시 키보드 팝업 크래시 방지 및 UX 개선을 위해 플랫폼별 분기 처리)
-            try
-            {
-                #if !UNITY_ANDROID && !UNITY_IOS
-                inputField.ActivateInputField();
-                #endif
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogWarning("[TerminalManager] Failed to activate input field: " + e.Message);
-            }
-        }
+        // 콘솔 창을 작은 메시지 박스로 전환
+        SetupMessageBox();
 
-        // [추가] Send 버튼 자동 검색 및 이벤트 바인딩
+        AddLog("<color=#33FF88>게이트 접속 완료. 어서 오세요, 그림자 군주여!</color>");
+    }
+
+    // 기존의 큰 콘솔(입력창 + 로그 창)을 화면 하단의 작은 메시지 박스로 바꿉니다.
+    private void SetupMessageBox()
+    {
+        // 1. 콘솔 입력창 / 전송 버튼 숨기기 (명령 입력 UI 제거)
+        if (inputField != null) inputField.gameObject.SetActive(false);
+
         Button[] childButtons = GetComponentsInChildren<Button>(true);
         foreach (var btn in childButtons)
         {
-            if (btn.gameObject.name.Contains("Send") || btn.gameObject.name.Contains("Submit"))
+            string n = btn.gameObject.name.ToLower();
+            if (n.Contains("send") || n.Contains("submit"))
             {
-                btn.onClick.AddListener(OnClickSendButton);
-                break;
+                btn.gameObject.SetActive(false);
             }
         }
 
-        // [추가] 로그 아이콘 버튼 검색 및 터미널 패널/텍스트 터치 시 확장 연동
-        Button logIconButton = null;
-        Button[] allButtons = FindObjectsOfType<Button>(true);
-        foreach (var btn in allButtons)
+        // 2. 패널을 하단(탭 바 위)의 작은 박스로 재배치
+        RectTransform rect = GetComponent<RectTransform>();
+        if (rect != null)
         {
-            if (btn.gameObject.name.ToLower().Contains("log") && 
-                !btn.gameObject.name.ToLower().Contains("send") && 
-                !btn.gameObject.name.ToLower().Contains("submit") &&
-                !btn.gameObject.name.ToLower().Contains("text"))
-            {
-                logIconButton = btn;
-                break;
-            }
-            Image img = btn.GetComponent<Image>();
-            if (img != null && img.sprite != null && img.sprite.name.ToLower().Contains("log"))
-            {
-                logIconButton = btn;
-                break;
-            }
+            rect.anchorMin = new Vector2(0.5f, 0f);
+            rect.anchorMax = new Vector2(0.5f, 0f);
+            rect.pivot = new Vector2(0.5f, 0f);
+            rect.anchoredPosition = new Vector2(0f, 140f); // 하단 탭 바(120px) 바로 위
+            rect.sizeDelta = new Vector2(780f, 160f);
         }
 
-        // 1. 터미널 패널 (Panel_Terminal) 터치 연동 (안전한 예외 처리 및 널 방지)
-        try
+        // 3. 배경: 반투명 박스 + 터치 통과(게임 조작 방해 방지)
+        Image panelImg = GetComponent<Image>();
+        if (panelImg != null)
         {
-            Image panelImg = GetComponent<Image>();
-            if (panelImg != null)
-            {
-                panelImg.raycastTarget = true;
-                Button panelBtn = gameObject.GetComponent<Button>();
-                if (panelBtn == null)
-                {
-                    panelBtn = gameObject.AddComponent<Button>();
-                }
-                if (panelBtn != null)
-                {
-                    panelBtn.transition = Selectable.Transition.None;
-                    panelBtn.onClick.RemoveAllListeners();
-                    panelBtn.onClick.AddListener(() => {
-                        if (logIconButton != null)
-                        {
-                            logIconButton.onClick.Invoke();
-                        }
-                    });
-                }
-            }
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError("[TerminalManager] Failed to bind panel button: " + e.Message);
+            panelImg.color = new Color(0.05f, 0.05f, 0.08f, 0.82f);
+            panelImg.raycastTarget = false;
         }
 
-        // 2. 터미널 텍스트 (Txt_TerminalLog) 터치 패스스루 설정
-        // 텍스트에는 동적 버튼을 달지 않고 터치를 통과시켜 배경 패널 버튼이 받도록 합니다. (런타임 크래시 완전 방지)
+        // 4. 텍스트: 최근 메시지만 하단 정렬로 표시, 터치 통과
         if (terminalText != null)
         {
             terminalText.raycastTarget = false;
+            terminalText.fontSize = 22;
+            terminalText.alignment = TextAlignmentOptions.BottomLeft;
+            terminalText.overflowMode = TextOverflowModes.Truncate;
+
+            RectTransform tr = terminalText.GetComponent<RectTransform>();
+            if (tr != null)
+            {
+                tr.anchorMin = Vector2.zero;
+                tr.anchorMax = Vector2.one;
+                tr.offsetMin = new Vector2(20f, 12f);
+                tr.offsetMax = new Vector2(-20f, -12f);
+            }
         }
 
-        AddLog("<color=green>Gate connection initialized. Welcome, Shadow Monarch!</color>");
-        AddLog("Type <color=yellow>'help'</color> to see available commands.");
+        // 5. 페이드아웃용 CanvasGroup
+        messageBoxGroup = GetComponent<CanvasGroup>();
+        if (messageBoxGroup == null) messageBoxGroup = gameObject.AddComponent<CanvasGroup>();
+        messageBoxGroup.alpha = 0f;
+        messageBoxGroup.interactable = false;
+        messageBoxGroup.blocksRaycasts = false;
     }
 
     void Update()
     {
-        // 마우스 클릭 등으로 입력창 포커스가 풀렸을 때, 
-        // 키보드 입력을 계속 터미널에 할 수 있도록 백그라운드 클릭 시 복구하는 처리
-        // (필요 시 포커스 강제 유지 또는 `~`나 `Enter` 등으로 포커스 주는 연출 가능)
-        if (inputField != null && !inputField.isFocused && Input.GetKeyDown(KeyCode.Return))
+        // 마지막 메시지 후 일정 시간이 지나면 메시지 박스를 서서히 숨김
+        if (messageBoxGroup != null && messageBoxGroup.alpha > 0f)
         {
-            inputField.ActivateInputField();
+            if (Time.time - lastMessageTime > MessageDisplayDuration)
+            {
+                messageBoxGroup.alpha = Mathf.MoveTowards(messageBoxGroup.alpha, 0f, Time.deltaTime * 1.5f);
+            }
         }
     }
 
     public void AddLog(string message)
     {
-        // 현재 시간 구하기
-        string time = System.DateTime.Now.ToString("HH:mm:ss");
-        string formattedLog = $"<color=#888888>[{time}]</color> {message}";
+        logLines.Add(message);
 
-        logLines.Add(formattedLog);
-
-        // 너무 많으면 옛날 로그 삭제 (메모리 관리)
+        // 너무 많으면 옛날 로그 삭제 (최근 몇 줄만 유지)
         if (logLines.Count > maxLines)
         {
             logLines.RemoveAt(0);
         }
 
         // 화면 갱신
-        terminalText.text = string.Join("\n", logLines);
+        if (terminalText != null)
+        {
+            terminalText.text = string.Join("\n", logLines);
+        }
+
+        // 메시지 박스를 즉시 표시하고 페이드 타이머 리셋
+        if (messageBoxGroup != null) messageBoxGroup.alpha = 1f;
+        lastMessageTime = Time.time;
     }
 
     // [신규] 입력된 명령어를 처리하는 함수

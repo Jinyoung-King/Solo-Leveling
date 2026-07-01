@@ -378,9 +378,9 @@ public class GameManager : MonoBehaviour
             string marksLabel = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("marks_label") : "Disk";
             string boostLabel = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("boost_label") : "Current Boost";
 
-            myInfoText.text = 
-                $"<color=#00FF00>⚡ {FormatNumber(currentLPS)} /sec</color>\n" +
-                $"<color=#FFD700>💾 {marksLabel}: {goldenDisks}</color> | <color=#00FFFF>💻 Lv.{serverLevel}</color>\n" +
+            myInfoText.text =
+                $"<color=#00FF00>{FormatNumber(currentLPS)} /sec</color>\n" +
+                $"<color=#FFD700>{marksLabel}: {goldenDisks}</color> | <color=#00FFFF>Lv.{serverLevel}</color>\n" +
                 $"<size=80%>({boostLabel}: <color=orange>x{totalMultiplier:F1}</color>)</size>";
         }
 

@@ -138,19 +138,19 @@ public class GachaManager : MonoBehaviour
         // 터미널 피드백
         if (LocalizationManager.Instance != null && LocalizationManager.Instance.CurrentLanguage == Language.English)
         {
-            gameManager.terminalManager?.AddLog($"🎰 <color=yellow><b>[GACHA]</b></color> Obtained <color={rarityColor}><b>[{drawn.rarity}] {localName}</b></color>! (Lv.{drawn.level})");
+            gameManager.terminalManager?.AddLog($"★ <color=yellow><b>[GACHA]</b></color> Obtained <color={rarityColor}><b>[{drawn.rarity}] {localName}</b></color>! (Lv.{drawn.level})");
             gameManager.terminalManager?.AddLog($"   └ Effect: {localDesc}");
         }
         else
         {
-            gameManager.terminalManager?.AddLog($"🎰 <color=yellow><b>[GACHA]</b></color> <color={rarityColor}><b>[{drawn.rarity}] {localName}</b></color> 획득! (현재 Lv.{drawn.level})");
+            gameManager.terminalManager?.AddLog($"★ <color=yellow><b>[GACHA]</b></color> <color={rarityColor}><b>[{drawn.rarity}] {localName}</b></color> 획득! (현재 Lv.{drawn.level})");
             gameManager.terminalManager?.AddLog($"   └ 효과: {localDesc}");
         }
 
         if (gameManager.gachaResultText != null)
         {
             string drawTitle = LocalizationManager.Instance != null ? (LocalizationManager.Instance.CurrentLanguage == Language.English ? "Obtained!" : "획득!") : "획득!";
-            gameManager.gachaResultText.text = $"🎰 <color={rarityColor}><b>[{drawn.rarity}]</b></color> {drawTitle}\n<size=120%><b>{localName}</b></size>\n\n<size=80%>{localDesc}</size>";
+            gameManager.gachaResultText.text = $"★ <color={rarityColor}><b>[{drawn.rarity}]</b></color> {drawTitle}\n<size=120%><b>{localName}</b></size>\n\n<size=80%>{localDesc}</size>";
         }
 
         if (gameManager.buttonShaker != null && drawn.rarity == "Legendary")
@@ -164,7 +164,7 @@ public class GachaManager : MonoBehaviour
         if (gameManager == null) return;
 
         string suffix = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("mana") : "Mana";
-        string drawBtnLabel = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("gacha_draw_btn") : "🎰 1회 뽑기";
+        string drawBtnLabel = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("gacha_draw_btn") : "★ 1회 뽑기";
 
         if (gameManager.gachaCostText != null)
         {

@@ -18,9 +18,9 @@ public class LocalizationManager : MonoBehaviour
         // UI Labels
         { "mana", new Dictionary<Language, string>() { { Language.Korean, "마력" }, { Language.English, "Mana" } } },
         { "monarch_upgrade", new Dictionary<Language, string>() { { Language.Korean, "군주 권능 강화" }, { Language.English, "Monarch Upgrade" } } },
-        { "gacha_title", new Dictionary<Language, string>() { { Language.Korean, "🎰 헌터 장비 가차 🎰" }, { Language.English, "🎰 HUNTER EQUIPMENT GACHA 🎰" } } },
-        { "gacha_desc", new Dictionary<Language, string>() { { Language.Korean, "마나를 소모하여 헌터 무기 및 장비를 뽑으세요!\n\n<size=80%>(1회 50.0K 마나 ➔ 뽑을 때마다 상승)</size>" }, { Language.English, "Spend Mana to draw Hunter weapons and gears!\n\n<size=80%>(1회 50.0K Mana ➔ Increases each draw)</size>" } } },
-        { "gacha_draw_btn", new Dictionary<Language, string>() { { Language.Korean, "🎰 1회 뽑기" }, { Language.English, "🎰 1 Draw" } } },
+        { "gacha_title", new Dictionary<Language, string>() { { Language.Korean, "★ 헌터 장비 가차 ★" }, { Language.English, "★ HUNTER EQUIPMENT GACHA ★" } } },
+        { "gacha_desc", new Dictionary<Language, string>() { { Language.Korean, "마나를 소모하여 헌터 무기 및 장비를 뽑으세요!\n\n<size=80%>(1회 50.0K 마나 -> 뽑을 때마다 상승)</size>" }, { Language.English, "Spend Mana to draw Hunter weapons and gears!\n\n<size=80%>(1회 50.0K Mana -> Increases each draw)</size>" } } },
+        { "gacha_draw_btn", new Dictionary<Language, string>() { { Language.Korean, "★ 1회 뽑기" }, { Language.English, "★ 1 Draw" } } },
         { "gacha_close_btn", new Dictionary<Language, string>() { { Language.Korean, "닫기" }, { Language.English, "Close" } } },
         { "gacha_empty_list", new Dictionary<Language, string>() { { Language.Korean, "보유 장비 없음" }, { Language.English, "No equipment owned" } } },
         { "gacha_book_title", new Dictionary<Language, string>() { { Language.Korean, "=== 보유 장비 목록 (도감) ===" }, { Language.English, "=== Equipment Inventory (Index) ===" } } },
