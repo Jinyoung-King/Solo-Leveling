@@ -272,8 +272,11 @@ public class AutoBuilder
     public static void SetupGachaUI(GameManager gameManager)
     {
         if (gameManager == null) return;
-        
+
+        // GameManager is a scene-root object (not under the Canvas), so GetComponentInParent<Canvas>()
+        // returns null and the whole gacha UI silently fails to be created. Find the Canvas in the scene.
         Canvas canvas = gameManager.GetComponentInParent<Canvas>();
+        if (canvas == null) canvas = Object.FindAnyObjectByType<Canvas>();
         if (canvas == null) return;
 
         // 1. Gacha 메인 팝업 패널 생성
