@@ -27,6 +27,10 @@ public class GameManager : MonoBehaviour
     public long logs = 0;
     public int serverLevel = 1;
     public long upgradeCost = 100;
+    public int currentGate = 1; // 게이트 진행도
+
+    [Header("Gate System")]
+    [HideInInspector] public GameObject gateBossPanel;
     public List<Unit> units = new List<Unit>();
     private List<TextMeshProUGUI> generatedButtonTexts = new List<TextMeshProUGUI>();
     public TerminalManager terminalManager;
@@ -97,6 +101,7 @@ public class GameManager : MonoBehaviour
     private OverclockManager overclockManager;
     private BugManager bugManager;
     private PrestigeManager prestigeManager;
+    private GateManager gateManager;
 
     // Helper properties to access sub-manager states
     public bool IsCoffeeActive => skillManager != null && skillManager.IsCoffeeTime;
@@ -128,6 +133,11 @@ public class GameManager : MonoBehaviour
 
         GenerateTechStack();
         LoadGame();
+
+        // 게이트 진행 매니저 (LoadGame 이후 currentGate 로 초기화)
+        gateManager = gameObject.AddComponent<GateManager>();
+        gateManager.Initialize(this);
+
         UpdateUI();
         CreateLanguageButton();
 
@@ -179,6 +189,7 @@ public class GameManager : MonoBehaviour
         {
             long totalRevenue = GetTotalRevenue();
             logs += totalRevenue;
+            gateManager?.DealDamage(totalRevenue); // 초당생산 = 게이트 보스 지속 딜
             timer -= 1f;
             UpdateUI();
         }
@@ -193,7 +204,7 @@ public class GameManager : MonoBehaviour
 
         float prestigeMultiplier = 1f + (goldenDisks * 0.1f);
         float equipMultiplier = GetEquipmentMultiplier();
-        clickProfit = (long)(clickProfit * prestigeMultiplier * equipMultiplier);
+        clickProfit = (long)(clickProfit * prestigeMultiplier * equipMultiplier * GetGateMultiplier());
 
         if (IsOverclockActive) clickProfit *= 5;
 
@@ -229,6 +240,7 @@ public class GameManager : MonoBehaviour
         }
 
         logs += clickProfit;
+        gateManager?.DealDamage(clickProfit); // 클릭 = 게이트 보스 클릭 데미지
         UpdateUI();
 
         if (bounceRoutine != null) StopCoroutine(bounceRoutine);
@@ -248,7 +260,7 @@ public class GameManager : MonoBehaviour
 
         float prestigeMultiplier = 1f + (goldenDisks * 0.1f);
         float equipMultiplier = GetEquipmentMultiplier();
-        total = (long)(total * prestigeMultiplier * equipMultiplier);
+        total = (long)(total * prestigeMultiplier * equipMultiplier * GetGateMultiplier());
 
         return total;
     }
@@ -260,6 +272,7 @@ public class GameManager : MonoBehaviour
         if (IsOverclockActive) totalMultiplier *= 5f;
         totalMultiplier *= (1f + (goldenDisks * 0.1f));
         totalMultiplier *= GetEquipmentMultiplier();
+        totalMultiplier *= GetGateMultiplier();
         return totalMultiplier;
     }
 
@@ -410,6 +423,8 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    public float GetGateMultiplier() => gateManager != null ? gateManager.GetGateMultiplier() : 1f;
+
     public void ActivateCoffee() => skillManager?.ActivateCoffee();
     public void OpenMigrationPopup() => prestigeManager?.OpenMigrationPopup();
     public void CloseMigrationPopup() => prestigeManager?.CloseMigrationPopup();
@@ -432,8 +447,10 @@ public class GameManager : MonoBehaviour
         upgradeCost = 100;
         goldenDisks = 0;
         gachaCost = 50000;
+        currentGate = 1;
         foreach (var u in units) { u.count = 0; u.LoadCount(0); }
         if (gachaManager != null) gachaManager.InitializeEquipments();
+        gateManager?.ResetToCurrent();
         UpdateUI();
         terminalManager?.AddLog("[INFO] <color=red><b>SYSTEM RESET COMPLETED.</b></color>");
     }

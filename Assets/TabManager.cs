@@ -49,6 +49,12 @@ public class TabManager : MonoBehaviour
             portalElements.Add(gameManager.upgradeButton.gameObject);
         }
 
+        // 게이트 보스 HP 바는 게이트(Gate) 탭에서만 표시
+        if (gameManager.gateBossPanel != null)
+        {
+            portalElements.Add(gameManager.gateBossPanel);
+        }
+
         // Status (Monarch) tab hosts only the prestige/migration panel.
         if (gameManager.migrationPanel != null)
         {

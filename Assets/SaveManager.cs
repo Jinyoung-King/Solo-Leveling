@@ -10,6 +10,7 @@ public class SaveManager : MonoBehaviour
     const string KEY_TIME = "LastSaveTime";
     const string KEY_LEVEL = "ServerLevel";
     const string KEY_UPGRADE_COST = "UpgradeCost";
+    const string KEY_GATE = "CurrentGate";
 
     public void Initialize(GameManager gm)
     {
@@ -24,6 +25,7 @@ public class SaveManager : MonoBehaviour
         PlayerPrefs.SetInt(KEY_LEVEL, gameManager.serverLevel);
         PlayerPrefs.SetString(KEY_UPGRADE_COST, gameManager.upgradeCost.ToString());
         PlayerPrefs.SetInt(KEY_GOLDEN_DISK, gameManager.goldenDisks);
+        PlayerPrefs.SetInt(KEY_GATE, gameManager.currentGate);
 
         for (int i = 0; i < gameManager.units.Count; i++)
         {
@@ -55,6 +57,7 @@ public class SaveManager : MonoBehaviour
         long.TryParse(PlayerPrefs.GetString(KEY_UPGRADE_COST, "100"), out gameManager.upgradeCost);
 
         gameManager.goldenDisks = PlayerPrefs.GetInt(KEY_GOLDEN_DISK, 0);
+        gameManager.currentGate = PlayerPrefs.GetInt(KEY_GATE, 1);
 
         for (int i = 0; i < gameManager.units.Count; i++)
         {
