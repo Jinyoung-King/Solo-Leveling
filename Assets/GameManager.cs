@@ -31,6 +31,7 @@ public class GameManager : MonoBehaviour
 
     [Header("Gate System")]
     [HideInInspector] public GameObject gateBossPanel;
+    [HideInInspector] public GameObject skillBarPanel;
     public List<Unit> units = new List<Unit>();
     private List<TextMeshProUGUI> generatedButtonTexts = new List<TextMeshProUGUI>();
     public TerminalManager terminalManager;
@@ -102,6 +103,7 @@ public class GameManager : MonoBehaviour
     private BugManager bugManager;
     private PrestigeManager prestigeManager;
     private GateManager gateManager;
+    private SkillBarManager skillBarManager;
 
     // Helper properties to access sub-manager states
     public bool IsCoffeeActive => skillManager != null && skillManager.IsCoffeeTime;
@@ -137,6 +139,10 @@ public class GameManager : MonoBehaviour
         // 게이트 진행 매니저 (LoadGame 이후 currentGate 로 초기화)
         gateManager = gameObject.AddComponent<GateManager>();
         gateManager.Initialize(this);
+
+        // 군주 액티브 스킬바
+        skillBarManager = gameObject.AddComponent<SkillBarManager>();
+        skillBarManager.Initialize(this);
 
         UpdateUI();
         CreateLanguageButton();
@@ -424,6 +430,7 @@ public class GameManager : MonoBehaviour
     }
 
     public float GetGateMultiplier() => gateManager != null ? gateManager.GetGateMultiplier() : 1f;
+    public void DealGateDamage(long amount) => gateManager?.DealDamage(amount);
 
     public void ActivateCoffee() => skillManager?.ActivateCoffee();
     public void OpenMigrationPopup() => prestigeManager?.OpenMigrationPopup();
