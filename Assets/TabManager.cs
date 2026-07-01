@@ -7,69 +7,52 @@ public class TabManager : MonoBehaviour
 {
     private GameManager gameManager;
 
-    private GameObject tabGroupPortal;
-    private GameObject tabGroupShop;
-    private GameObject tabGroupGacha;
-    private GameObject tabGroupStatus;
+    private List<GameObject> portalElements = new List<GameObject>();
+    private List<GameObject> armyElements = new List<GameObject>();
+    private List<GameObject> gachaElements = new List<GameObject>();
+    private List<GameObject> statusElements = new List<GameObject>();
 
     private List<Button> tabButtons = new List<Button>();
     private List<TextMeshProUGUI> tabTexts = new List<TextMeshProUGUI>();
 
     public int ActiveTab { get; private set; } = 0; // 0: Portal, 1: Army, 2: Gacha, 3: Status
 
-    private GameObject CreateTabGroup(string name)
-    {
-        GameObject go = new GameObject(name, typeof(RectTransform));
-        go.transform.SetParent(gameManager.transform.parent, false);
-        
-        RectTransform rect = go.GetComponent<RectTransform>();
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-        
-        return go;
-    }
-
     public void Initialize(GameManager gm)
     {
         gameManager = gm;
 
-        // 1. Group existing components
-        // (1) Portal Group
-        tabGroupPortal = CreateTabGroup("TabGroup_Portal");
-        
-        if (gameManager.serverButtonTr != null) gameManager.serverButtonTr.SetParent(tabGroupPortal.transform, true);
-        if (gameManager.coffeeBtn != null) gameManager.coffeeBtn.transform.SetParent(tabGroupPortal.transform, true);
-        if (gameManager.coffeeSlider != null) gameManager.coffeeSlider.transform.SetParent(tabGroupPortal.transform, true);
-        if (gameManager.heatSlider != null) gameManager.heatSlider.transform.SetParent(tabGroupPortal.transform, true);
+        // 1. Populate element groups (do NOT reparent to preserve layout/draw order)
+        if (gameManager.serverButtonTr != null) portalElements.Add(gameManager.serverButtonTr.gameObject);
+        if (gameManager.coffeeBtn != null) portalElements.Add(gameManager.coffeeBtn.gameObject);
+        if (gameManager.coffeeSlider != null) portalElements.Add(gameManager.coffeeSlider.gameObject);
+        if (gameManager.heatSlider != null) portalElements.Add(gameManager.heatSlider.gameObject);
 
-        // (2) Shop Group (Scroll View containing shopContent)
-        tabGroupShop = CreateTabGroup("TabGroup_Shop");
         if (gameManager.shopContent != null)
         {
             Transform scrollView = gameManager.shopContent.parent.parent; // Scroll View
-            scrollView.SetParent(tabGroupShop.transform, true);
+            if (scrollView != null)
+            {
+                armyElements.Add(scrollView.gameObject);
+            }
         }
 
-        // (3) Gacha Group
-        tabGroupGacha = CreateTabGroup("TabGroup_Gacha");
         if (gameManager.gachaPanel != null)
         {
-            gameManager.gachaPanel.transform.SetParent(tabGroupGacha.transform, true);
+            gachaElements.Add(gameManager.gachaPanel);
         }
 
-        // (4) Status Group
-        tabGroupStatus = CreateTabGroup("TabGroup_Status");
-        
-        if (gameManager.migrationPanel != null)
-        {
-            gameManager.migrationPanel.transform.SetParent(tabGroupStatus.transform, true);
-        }
+        // NOTE: heatSlider (Slider_Heat) is a child of upgradeButton (Btn_Upgrade_CPU) in the scene,
+        // and both live in the central play area with the server button. They must share a tab,
+        // otherwise deactivating the parent hides the child regardless of its own active flag.
         if (gameManager.upgradeButton != null)
         {
-            gameManager.upgradeButton.transform.SetParent(tabGroupStatus.transform, true);
+            portalElements.Add(gameManager.upgradeButton.gameObject);
+        }
+
+        // Status (Monarch) tab hosts only the prestige/migration panel.
+        if (gameManager.migrationPanel != null)
+        {
+            statusElements.Add(gameManager.migrationPanel);
         }
 
         // 2. Create the Bottom Tab Bar
@@ -81,7 +64,8 @@ public class TabManager : MonoBehaviour
 
     private void CreateTabBar()
     {
-        Canvas canvas = gameManager.GetComponentInParent<Canvas>();
+        // Find Canvas in scene since GameManager might be a root object
+        Canvas canvas = Object.FindAnyObjectByType<Canvas>();
         if (canvas == null) return;
 
         // Bottom Tab Panel
@@ -96,6 +80,9 @@ public class TabManager : MonoBehaviour
         barRect.sizeDelta = new Vector2(0, 120); // 120px height
         barRect.offsetMin = new Vector2(0, 0);
         barRect.offsetMax = new Vector2(0, 120);
+
+        // Keep the tab bar rendered above all toggled content.
+        tabBarGo.transform.SetAsLastSibling();
 
         Image barImg = tabBarGo.GetComponent<Image>();
         barImg.color = new Color(0.08f, 0.08f, 0.12f, 0.95f); // Sleek dark gray
@@ -158,11 +145,11 @@ public class TabManager : MonoBehaviour
     {
         ActiveTab = index;
 
-        // Toggle visibility of each group
-        tabGroupPortal.SetActive(index == 0);
-        tabGroupShop.SetActive(index == 1);
-        tabGroupGacha.SetActive(index == 2);
-        tabGroupStatus.SetActive(index == 3);
+        // Toggle active state of original components directly without reparenting
+        foreach (var go in portalElements) if (go != null) go.SetActive(index == 0);
+        foreach (var go in armyElements) if (go != null) go.SetActive(index == 1);
+        foreach (var go in gachaElements) if (go != null) go.SetActive(index == 2);
+        foreach (var go in statusElements) if (go != null) go.SetActive(index == 3);
 
         // Visual feedback for active button
         for (int i = 0; i < tabButtons.Count; i++)
@@ -203,6 +190,7 @@ public class TabManager : MonoBehaviour
             {
                 gameManager.migrationPanel.SetActive(true);
                 
+                // Reposition only inside Status tab area
                 RectTransform mRect = gameManager.migrationPanel.GetComponent<RectTransform>();
                 mRect.anchorMin = new Vector2(0.5f, 0.5f);
                 mRect.anchorMax = new Vector2(0.5f, 0.5f);
@@ -216,15 +204,6 @@ public class TabManager : MonoBehaviour
                     string formatStr = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("prestige_popup_desc") : "그림자 영토를 다음 차원 게이트로 이전하겠습니까?\n\n현재 그림자 군대 데이터는 초기화되지만 어둠의 징표 {0}개를 획득합니다.\n\n현재 보유: {1}개\n총 마력 보너스: +{2}%";
                     gameManager.migrationInfoText.text = string.Format(formatStr, potentialDisks, gameManager.goldenDisks, (gameManager.goldenDisks + potentialDisks) * 10);
                 }
-            }
-            if (gameManager.upgradeButton != null)
-            {
-                RectTransform uRect = gameManager.upgradeButton.GetComponent<RectTransform>();
-                uRect.anchorMin = new Vector2(0.5f, 0);
-                uRect.anchorMax = new Vector2(0.5f, 0);
-                uRect.pivot = new Vector2(0.5f, 0);
-                uRect.anchoredPosition = new Vector2(0, 200);
-                uRect.sizeDelta = new Vector2(500, 120);
             }
         }
         else
