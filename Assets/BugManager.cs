@@ -75,6 +75,7 @@ public class BugManager : MonoBehaviour
             reward = (long)(reward * prestigeMultiplier);
 
             gameManager.logs += reward;
+            gameManager.ReportBeastPurge();
             gameManager.UpdateUI();
 
             string fixedStr = LocalizationManager.Instance != null ? LocalizationManager.Instance.Get("beast_fixed") : "BEAST PURGED! Reward: +";

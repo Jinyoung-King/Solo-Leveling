@@ -104,6 +104,7 @@ public class GameManager : MonoBehaviour
     private PrestigeManager prestigeManager;
     private GateManager gateManager;
     private SkillBarManager skillBarManager;
+    private MissionManager missionManager;
 
     // Helper properties to access sub-manager states
     public bool IsCoffeeActive => skillManager != null && skillManager.IsCoffeeTime;
@@ -143,6 +144,10 @@ public class GameManager : MonoBehaviour
         // 군주 액티브 스킬바
         skillBarManager = gameObject.AddComponent<SkillBarManager>();
         skillBarManager.Initialize(this);
+
+        // 일일 임무 / 연속 출석
+        missionManager = gameObject.AddComponent<MissionManager>();
+        missionManager.Initialize(this);
 
         UpdateUI();
         CreateLanguageButton();
@@ -289,6 +294,7 @@ public class GameManager : MonoBehaviour
         {
             logs -= target.currentCost;
             target.Buy();
+            ReportSummon();
             UpdateUI();
             SaveGame();
             
@@ -431,6 +437,11 @@ public class GameManager : MonoBehaviour
 
     public float GetGateMultiplier() => gateManager != null ? gateManager.GetGateMultiplier() : 1f;
     public void DealGateDamage(long amount) => gateManager?.DealDamage(amount);
+
+    // 임무 진행 이벤트 훅
+    public void ReportSummon() => missionManager?.AddProgress(MissionType.Summon);
+    public void ReportGateClear() => missionManager?.AddProgress(MissionType.Gate);
+    public void ReportBeastPurge() => missionManager?.AddProgress(MissionType.Beast);
 
     public void ActivateCoffee() => skillManager?.ActivateCoffee();
     public void OpenMigrationPopup() => prestigeManager?.OpenMigrationPopup();

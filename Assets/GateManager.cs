@@ -84,6 +84,7 @@ public class GateManager : MonoBehaviour
 
         if (gameManager.buttonShaker != null) gameManager.buttonShaker.Shake();
 
+        gameManager.ReportGateClear();
         gameManager.UpdateUI();
         gameManager.SaveGame();
     }
