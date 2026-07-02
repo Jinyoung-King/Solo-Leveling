@@ -196,6 +196,8 @@ public class AutoBuilder
             SetupGachaUI(gameManager);
         }
 
+        SetupBackground();
+
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
         Debug.Log("[AutoBuilder] Scene modified and saved.");
@@ -361,6 +363,52 @@ public class AutoBuilder
             }
         }
         if (font.material != null) EditorUtility.SetDirty(font.material);
+    }
+
+    // 차원 게이트 이미지를 풀스크린 배경으로 깔고, 가독성용 딥 인디고 오버레이를 얹는다.
+    public static void SetupBackground()
+    {
+        Canvas canvas = Object.FindAnyObjectByType<Canvas>();
+        if (canvas == null) return;
+
+        // 이미 있으면 스킵
+        foreach (Transform t in canvas.GetComponentsInChildren<Transform>(true))
+            if (t != null && t.name == "Bg_DimensionalGate") return;
+
+        string path = "Assets/dimensional_gate.png";
+        TextureImporter ti = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (ti != null && ti.textureType != TextureImporterType.Sprite)
+        {
+            ti.textureType = TextureImporterType.Sprite;
+            ti.SaveAndReimport();
+        }
+        Sprite sp = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+
+        // 배경 이미지 (맨 뒤)
+        GameObject bg = new GameObject("Bg_DimensionalGate", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        bg.transform.SetParent(canvas.transform, false);
+        RectTransform br = bg.GetComponent<RectTransform>();
+        br.anchorMin = Vector2.zero; br.anchorMax = Vector2.one;
+        br.offsetMin = Vector2.zero; br.offsetMax = Vector2.zero;
+        Image bimg = bg.GetComponent<Image>();
+        if (sp != null) bimg.sprite = sp;
+        bimg.color = new Color(0.62f, 0.62f, 0.72f, 1f);
+        bimg.raycastTarget = false;
+        bimg.preserveAspect = false;
+        bg.transform.SetSiblingIndex(0);
+
+        // 딥 인디고 오버레이 (배경 위, UI 아래)
+        GameObject ov = new GameObject("Bg_Overlay", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+        ov.transform.SetParent(canvas.transform, false);
+        RectTransform ovr = ov.GetComponent<RectTransform>();
+        ovr.anchorMin = Vector2.zero; ovr.anchorMax = Vector2.one;
+        ovr.offsetMin = Vector2.zero; ovr.offsetMax = Vector2.zero;
+        Image ovimg = ov.GetComponent<Image>();
+        ovimg.color = new Color(0.04f, 0.03f, 0.09f, 0.55f);
+        ovimg.raycastTarget = false;
+        ov.transform.SetSiblingIndex(1);
+
+        Debug.Log("[AutoBuilder] Dimensional gate background created.");
     }
 
     public static void SetupGachaUI(GameManager gameManager)
