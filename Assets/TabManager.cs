@@ -101,7 +101,7 @@ public class TabManager : MonoBehaviour
         tabBarGo.transform.SetAsLastSibling();
 
         Image barImg = tabBarGo.GetComponent<Image>();
-        barImg.color = new Color(0.08f, 0.08f, 0.12f, 0.95f); // Sleek dark gray
+        UITheme.Panel(barImg, UITheme.BarBg);
 
         float buttonWidth = 1f / 4f;
 
@@ -118,7 +118,6 @@ public class TabManager : MonoBehaviour
             btnRect.offsetMax = new Vector2(-10, -10);
 
             Image btnImg = btnGo.GetComponent<Image>();
-            btnImg.color = new Color(0.15f, 0.15f, 0.2f, 0.6f);
 
             GameObject textGo = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
             textGo.transform.SetParent(btnGo.transform, false);
@@ -128,13 +127,15 @@ public class TabManager : MonoBehaviour
             textRect.sizeDelta = Vector2.zero;
 
             TextMeshProUGUI txt = textGo.GetComponent<TextMeshProUGUI>();
-            txt.fontSize = 20;
-            txt.color = Color.white;
+            txt.fontSize = 22;
+            txt.color = UITheme.TextMain;
+            txt.fontStyle = FontStyles.Bold;
             txt.alignment = TextAlignmentOptions.Center;
             if (gameManager.scoreText != null) txt.font = gameManager.scoreText.font;
 
             int tabIndex = i;
             Button btn = btnGo.GetComponent<Button>();
+            UITheme.StyleButton(btn, UITheme.PanelSoft);
             btn.onClick.AddListener(() => SwitchTab(tabIndex));
 
             tabButtons.Add(btn);
@@ -173,13 +174,13 @@ public class TabManager : MonoBehaviour
             Image img = tabButtons[i].GetComponent<Image>();
             if (i == index)
             {
-                img.color = new Color(0.1f, 0.4f, 0.8f, 0.9f); // Bright blue for active tab
-                tabTexts[i].color = Color.yellow;
+                img.color = UITheme.Primary; // 활성 탭: 바이올렛
+                tabTexts[i].color = UITheme.Gold;
             }
             else
             {
-                img.color = new Color(0.15f, 0.15f, 0.2f, 0.6f); // Dark gray for inactive
-                tabTexts[i].color = Color.white;
+                img.color = UITheme.PanelSoft; // 비활성 탭
+                tabTexts[i].color = UITheme.TextDim;
             }
         }
 

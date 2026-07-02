@@ -67,7 +67,7 @@ public class TerminalManager : MonoBehaviour
         Image panelImg = GetComponent<Image>();
         if (panelImg != null)
         {
-            panelImg.color = new Color(0.05f, 0.05f, 0.08f, 0.82f);
+            UITheme.Panel(panelImg, new Color(0.10f, 0.09f, 0.18f, 0.85f));
             panelImg.raycastTarget = false;
         }
 

@@ -177,7 +177,7 @@ public class GateManager : MonoBehaviour
         pr.pivot = new Vector2(0.5f, 1f);
         pr.anchoredPosition = new Vector2(0f, -165f);
         pr.sizeDelta = new Vector2(780f, 120f);
-        panel.GetComponent<Image>().color = new Color(0.05f, 0.05f, 0.08f, 0.55f);
+        UITheme.Panel(panel.GetComponent<Image>(), new Color(0.10f, 0.09f, 0.18f, 0.78f));
 
         // 게이트/보스 라벨
         GameObject labelGo = new GameObject("Txt_GateLabel", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -203,7 +203,7 @@ public class GateManager : MonoBehaviour
         bgr.pivot = new Vector2(0.5f, 0f);
         bgr.anchoredPosition = new Vector2(0f, 14f);
         bgr.sizeDelta = new Vector2(-24f, 44f);
-        barBg.GetComponent<Image>().color = new Color(0.15f, 0.02f, 0.02f, 0.9f);
+        UITheme.Panel(barBg.GetComponent<Image>(), UITheme.HpTrack);
         barBg.GetComponent<Image>().raycastTarget = false;
 
         // HP 채움(앵커 기반, 스프라이트 불필요)
@@ -215,7 +215,7 @@ public class GateManager : MonoBehaviour
         fillRect.offsetMin = Vector2.zero;
         fillRect.offsetMax = Vector2.zero;
         Image fillImg = fill.GetComponent<Image>();
-        fillImg.color = new Color(0.85f, 0.15f, 0.2f, 0.95f);
+        UITheme.Panel(fillImg, UITheme.HpFill);
         fillImg.raycastTarget = false;
 
         // HP 수치 텍스트 (바 위에 겹침)

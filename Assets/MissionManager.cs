@@ -211,7 +211,7 @@ public class MissionManager : MonoBehaviour
         or.anchorMin = new Vector2(1f, 1f); or.anchorMax = new Vector2(1f, 1f); or.pivot = new Vector2(1f, 1f);
         or.anchoredPosition = new Vector2(-20f, -95f);
         or.sizeDelta = new Vector2(150f, 64f);
-        openGo.GetComponent<Image>().color = new Color(0.2f, 0.45f, 0.25f, 0.95f);
+        UITheme.StyleButton(openGo.GetComponent<Button>(), UITheme.Primary);
         MakeText(openGo.transform, en ? "Missions" : "일일 임무", 18, font, TextAlignmentOptions.Center);
         openGo.GetComponent<Button>().onClick.AddListener(OpenPopup);
 
@@ -222,17 +222,17 @@ public class MissionManager : MonoBehaviour
         pr.anchorMin = new Vector2(0.5f, 0.5f); pr.anchorMax = new Vector2(0.5f, 0.5f); pr.pivot = new Vector2(0.5f, 0.5f);
         pr.anchoredPosition = Vector2.zero;
         pr.sizeDelta = new Vector2(880f, 1000f);
-        popup.GetComponent<Image>().color = new Color(0.05f, 0.06f, 0.09f, 0.97f);
+        UITheme.Panel(popup.GetComponent<Image>(), UITheme.PanelBg);
 
         // 타이틀
         var title = MakeText(popup.transform, en ? "DAILY MISSIONS" : "일일 임무", 34, font, TextAlignmentOptions.Center);
         SetTop(title.rectTransform, -30f, 60f);
-        title.color = Color.yellow;
+        UITheme.TitleGradient(title);
 
         // 연속 출석 영역
         loginText = MakeText(popup.transform, "", 24, font, TextAlignmentOptions.Left);
         SetTop(loginText.rectTransform, -120f, 60f, 40f, -220f);
-        loginButton = MakeButton(popup.transform, en ? "Claim" : "받기", font, out loginBtnLabel, new Color(0.85f, 0.6f, 0.1f, 1f));
+        loginButton = MakeButton(popup.transform, en ? "Claim" : "받기", font, out loginBtnLabel, UITheme.Gold);
         RectTransform lbr = loginButton.GetComponent<RectTransform>();
         lbr.anchorMin = new Vector2(1f, 1f); lbr.anchorMax = new Vector2(1f, 1f); lbr.pivot = new Vector2(1f, 1f);
         lbr.anchoredPosition = new Vector2(-40f, -110f);
@@ -249,7 +249,7 @@ public class MissionManager : MonoBehaviour
             SetTop(m.infoText.rectTransform, y, 70f, 40f, -220f);
 
             Mission captured = m;
-            m.claimButton = MakeButton(popup.transform, en ? "Claim" : "받기", font, out m.claimLabel, new Color(0.2f, 0.5f, 0.85f, 1f));
+            m.claimButton = MakeButton(popup.transform, en ? "Claim" : "받기", font, out m.claimLabel, UITheme.Primary);
             RectTransform cbr = m.claimButton.GetComponent<RectTransform>();
             cbr.anchorMin = new Vector2(1f, 1f); cbr.anchorMax = new Vector2(1f, 1f); cbr.pivot = new Vector2(1f, 1f);
             cbr.anchoredPosition = new Vector2(-40f, y + 5f);
@@ -260,7 +260,7 @@ public class MissionManager : MonoBehaviour
         }
 
         // 닫기
-        Button close = MakeButton(popup.transform, en ? "Close" : "닫기", font, out _, new Color(0.3f, 0.3f, 0.3f, 1f));
+        Button close = MakeButton(popup.transform, en ? "Close" : "닫기", font, out _, UITheme.PanelSoft);
         RectTransform clr = close.GetComponent<RectTransform>();
         clr.anchorMin = new Vector2(0.5f, 0f); clr.anchorMax = new Vector2(0.5f, 0f); clr.pivot = new Vector2(0.5f, 0f);
         clr.anchoredPosition = new Vector2(0f, 40f);
@@ -329,7 +329,7 @@ public class MissionManager : MonoBehaviour
     {
         GameObject go = new GameObject("Btn", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image), typeof(Button));
         go.transform.SetParent(parent, false);
-        go.GetComponent<Image>().color = color;
+        UITheme.StyleButton(go.GetComponent<Button>(), color);
         outLabel = MakeText(go.transform, label, 22, font, TextAlignmentOptions.Center);
         RectTransform lr = outLabel.rectTransform;
         lr.anchorMin = Vector2.zero; lr.anchorMax = Vector2.one; lr.pivot = new Vector2(0.5f, 0.5f);

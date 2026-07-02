@@ -144,7 +144,7 @@ public class SkillBarManager : MonoBehaviour
         pr.anchoredPosition = new Vector2(0f, 320f); // 메시지 박스(140) 위쪽
         pr.sizeDelta = new Vector2(620f, 140f);
 
-        Color[] colors = { new Color(0.5f, 0.1f, 0.5f, 0.92f), new Color(0.1f, 0.35f, 0.6f, 0.92f) };
+        Color[] colors = { UITheme.Primary, new Color32(0x1C, 0x6E, 0x8C, 255) };
         float slot = 1f / skills.Count;
 
         for (int i = 0; i < skills.Count; i++)
@@ -158,7 +158,6 @@ public class SkillBarManager : MonoBehaviour
             br.anchorMax = new Vector2((i + 1) * slot, 1f);
             br.offsetMin = new Vector2(10f, 10f);
             br.offsetMax = new Vector2(-10f, -10f);
-            btnGo.GetComponent<Image>().color = colors[i % colors.Length];
 
             // 이름 라벨
             GameObject nameGo = new GameObject("Name", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -182,7 +181,7 @@ public class SkillBarManager : MonoBehaviour
             ovr.anchorMax = new Vector2(1f, 1f);
             ovr.offsetMin = Vector2.zero; ovr.offsetMax = Vector2.zero;
             Image ovImg = ovGo.GetComponent<Image>();
-            ovImg.color = new Color(0f, 0f, 0f, 0.6f);
+            UITheme.Panel(ovImg, new Color(0f, 0f, 0f, 0.6f));
             ovImg.raycastTarget = false;
             ovGo.SetActive(false);
             s.cdOverlay = ovr;
@@ -203,6 +202,7 @@ public class SkillBarManager : MonoBehaviour
             s.cdText = cdTxt;
 
             Button btn = btnGo.GetComponent<Button>();
+            UITheme.StyleButton(btn, colors[i % colors.Length]);
             Skill captured = s;
             btn.onClick.AddListener(() =>
             {

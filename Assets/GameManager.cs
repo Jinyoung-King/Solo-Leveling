@@ -512,7 +512,7 @@ public class GameManager : MonoBehaviour
         rect.sizeDelta = new Vector2(120, 60);
 
         Image img = langBtnGo.GetComponent<Image>();
-        img.color = new Color(0.15f, 0.15f, 0.15f, 0.9f);
+        UITheme.Panel(img, UITheme.PanelSoft);
 
         GameObject textGo = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
         textGo.transform.SetParent(langBtnGo.transform, false);
@@ -530,6 +530,7 @@ public class GameManager : MonoBehaviour
         if (scoreText != null) txt.font = scoreText.font;
 
         Button btn = langBtnGo.GetComponent<Button>();
+        UITheme.StyleButton(btn, UITheme.PanelSoft);
         btn.onClick.AddListener(() => {
             if (LocalizationManager.Instance != null)
             {

@@ -400,7 +400,7 @@ public class AutoBuilder
             rect.sizeDelta = new Vector2(900, 1300);
 
             Image bgImg = gachaGo.GetComponent<Image>();
-            bgImg.color = new Color(0.05f, 0.05f, 0.05f, 0.95f); // 어두운 블랙
+            UITheme.Panel(bgImg, UITheme.PanelBg);
 
             // (1) 타이틀 텍스트
             GameObject titleGo = new GameObject("Txt_Title", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -445,8 +445,7 @@ public class AutoBuilder
             drawRect.anchoredPosition = new Vector2(0, 240);
             drawRect.sizeDelta = new Vector2(400, 100);
 
-            Image drawBtnImg = drawBtnGo.GetComponent<Image>();
-            drawBtnImg.color = new Color(0.85f, 0.45f, 0f, 1f); // 오렌지/황금색 버튼
+            UITheme.StyleButton(drawBtnGo.GetComponent<Button>(), UITheme.Gold);
 
             GameObject drawBtnTextGo = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
             drawBtnTextGo.transform.SetParent(drawBtnGo.transform, false);
@@ -475,8 +474,7 @@ public class AutoBuilder
             closeRect.anchoredPosition = new Vector2(0, 80);
             closeRect.sizeDelta = new Vector2(400, 80);
 
-            Image closeBtnImg = closeBtnGo.GetComponent<Image>();
-            closeBtnImg.color = new Color(0.25f, 0.25f, 0.25f, 1f); // 회색
+            UITheme.StyleButton(closeBtnGo.GetComponent<Button>(), UITheme.PanelSoft);
 
             GameObject closeBtnTextGo = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
             closeBtnTextGo.transform.SetParent(closeBtnGo.transform, false);
@@ -552,8 +550,7 @@ public class AutoBuilder
             openRect.anchoredPosition = new Vector2(300, -220); // 커피 버프 슬라이더 우측
             openRect.sizeDelta = new Vector2(150, 70);
 
-            Image openImg = openBtnGo.GetComponent<Image>();
-            openImg.color = new Color(0.85f, 0.55f, 0f, 1f); // 금색
+            UITheme.StyleButton(openBtnGo.GetComponent<Button>(), UITheme.Gold);
 
             GameObject openTxtGo = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
             openTxtGo.transform.SetParent(openBtnGo.transform, false);

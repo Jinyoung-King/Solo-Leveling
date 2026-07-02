@@ -138,7 +138,7 @@ public class ArmyManager : MonoBehaviour
         pr.anchoredPosition = new Vector2(0f, 165f * -1f);
         pr.sizeDelta = new Vector2(780f, 150f);
         Image bg = panel.GetComponent<Image>();
-        bg.color = new Color(0.05f, 0.08f, 0.06f, 0.55f);
+        UITheme.Panel(bg, new Color(0.10f, 0.09f, 0.18f, 0.78f));
         bg.raycastTarget = false;
 
         GameObject txtGo = new GameObject("Txt_Synergy", typeof(RectTransform), typeof(TextMeshProUGUI));
