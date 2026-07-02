@@ -15,12 +15,17 @@ public class GateManager : MonoBehaviour
     // --- 튜닝 상수 ---
     private const double BaseHp = 20.0;      // 1게이트 보스 HP
     private const double HpGrowth = 1.65;    // 게이트당 HP 증가율
-    private const float RewardPerGate = 0.03f; // 게이트당 영구 마나/딜 +3%
+    private const float RewardPerGate = 0.05f; // 게이트당 영구 마나/딜 +5%
 
     // --- UI ---
     private RectTransform fillRect;
     private TextMeshProUGUI hpText;
     private TextMeshProUGUI gateLabel;
+
+    // 랭크업/보스 격파 배너
+    private CanvasGroup bannerGroup;
+    private TextMeshProUGUI bannerText;
+    private float bannerHold;
 
     private static readonly string[] RanksKr = { "E", "D", "C", "B", "A", "S" };
     private static readonly string[] BossKr = { "고블린", "오크", "리자드맨", "오우거", "나가", "자이언트 앤트", "몬스터 군주" };
@@ -60,7 +65,9 @@ public class GateManager : MonoBehaviour
         gameManager.currentGate++;
 
         bool bossGate = (cleared % 5 == 0);
-        if (bossGate) gameManager.goldenDisks += 1;
+        int oldTier = (cleared - 1) / 5;
+        int newTier = (gameManager.currentGate - 1) / 5;
+        bool rankUp = newTier > oldTier;
 
         // 넘친 데미지를 다음 보스에게 이월
         double overflow = -bossCurrentHp;
@@ -76,10 +83,24 @@ public class GateManager : MonoBehaviour
 
         if (bossGate)
         {
+            gameManager.goldenDisks += 1;
+            long bonus = System.Math.Max(gameManager.GetTotalRevenue() * 60, (long)gameManager.serverLevel * 5000);
+            gameManager.logs += bonus;
+
             string bmsg = en
-                ? $"[BOSS GATE] Dark Mark acquired! (Total: {gameManager.goldenDisks})"
-                : $"[보스 게이트] 어둠의 징표 획득! (보유: {gameManager.goldenDisks})";
+                ? $"[BOSS GATE] Dark Mark +1 & {gameManager.FormatNumber(bonus)} Mana!"
+                : $"[보스 게이트] 어둠의 징표 +1 & 마력 {gameManager.FormatNumber(bonus)}!";
             gameManager.terminalManager?.AddLog($"<color=yellow><b>{bmsg}</b></color>");
+        }
+
+        // 배너 연출 (랭크업 우선)
+        if (rankUp)
+        {
+            ShowBanner(en ? $"{RankName(gameManager.currentGate)}-RANK GATE!" : $"{RankName(gameManager.currentGate)}랭크 게이트 진입!", Color.cyan);
+        }
+        else if (bossGate)
+        {
+            ShowBanner(en ? $"BOSS DOWN! {RankName(cleared)}-Rank" : $"보스 격파! {RankName(cleared)}랭크", Color.yellow);
         }
 
         if (gameManager.buttonShaker != null) gameManager.buttonShaker.Shake();
@@ -87,6 +108,24 @@ public class GateManager : MonoBehaviour
         gameManager.ReportGateClear();
         gameManager.UpdateUI();
         gameManager.SaveGame();
+    }
+
+    private void ShowBanner(string msg, Color color)
+    {
+        if (bannerText == null) return;
+        bannerText.text = msg;
+        bannerText.color = color;
+        if (bannerGroup != null) bannerGroup.alpha = 1f;
+        bannerHold = 1.6f;
+    }
+
+    void Update()
+    {
+        if (bannerGroup != null && bannerGroup.alpha > 0f)
+        {
+            if (bannerHold > 0f) bannerHold -= Time.deltaTime;
+            else bannerGroup.alpha = Mathf.MoveTowards(bannerGroup.alpha, 0f, Time.deltaTime * 0.8f);
+        }
     }
 
     // 게이트 클리어로 얻은 영구 배수 (경제 전반에 반영)
@@ -202,6 +241,27 @@ public class GateManager : MonoBehaviour
 
         // 게이트 탭에서만 표시되도록 TabManager에 등록
         gameManager.gateBossPanel = panel;
+
+        // 랭크업/보스 격파 배너 (캔버스 직속 - 어느 탭에서도 표시)
+        GameObject bGo = new GameObject("Txt_GateBanner", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(CanvasGroup));
+        bGo.transform.SetParent(canvas.transform, false);
+        RectTransform brt = bGo.GetComponent<RectTransform>();
+        brt.anchorMin = new Vector2(0.5f, 0.5f);
+        brt.anchorMax = new Vector2(0.5f, 0.5f);
+        brt.pivot = new Vector2(0.5f, 0.5f);
+        brt.anchoredPosition = new Vector2(0f, 250f);
+        brt.sizeDelta = new Vector2(940f, 160f);
+        bannerText = bGo.GetComponent<TextMeshProUGUI>();
+        bannerText.fontSize = 48;
+        bannerText.fontStyle = FontStyles.Bold;
+        bannerText.color = Color.yellow;
+        bannerText.alignment = TextAlignmentOptions.Center;
+        bannerText.raycastTarget = false;
+        if (gameManager.scoreText != null) bannerText.font = gameManager.scoreText.font;
+        bannerGroup = bGo.GetComponent<CanvasGroup>();
+        bannerGroup.alpha = 0f;
+        bannerGroup.interactable = false;
+        bannerGroup.blocksRaycasts = false;
     }
 
     private void RefreshUI()
