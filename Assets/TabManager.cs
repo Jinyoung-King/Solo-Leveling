@@ -36,6 +36,12 @@ public class TabManager : MonoBehaviour
             }
         }
 
+        // 군대 시너지 패널은 그림자(Army) 탭에서만 표시
+        if (gameManager.armySynergyPanel != null)
+        {
+            armyElements.Add(gameManager.armySynergyPanel);
+        }
+
         if (gameManager.gachaPanel != null)
         {
             gachaElements.Add(gameManager.gachaPanel);

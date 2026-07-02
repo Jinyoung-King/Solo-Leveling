@@ -32,6 +32,7 @@ public class GameManager : MonoBehaviour
     [Header("Gate System")]
     [HideInInspector] public GameObject gateBossPanel;
     [HideInInspector] public GameObject skillBarPanel;
+    [HideInInspector] public GameObject armySynergyPanel;
     public List<Unit> units = new List<Unit>();
     private List<TextMeshProUGUI> generatedButtonTexts = new List<TextMeshProUGUI>();
     public TerminalManager terminalManager;
@@ -105,6 +106,7 @@ public class GameManager : MonoBehaviour
     private GateManager gateManager;
     private SkillBarManager skillBarManager;
     private MissionManager missionManager;
+    private ArmyManager armyManager;
 
     // Helper properties to access sub-manager states
     public bool IsCoffeeActive => skillManager != null && skillManager.IsCoffeeTime;
@@ -148,6 +150,10 @@ public class GameManager : MonoBehaviour
         // 일일 임무 / 연속 출석
         missionManager = gameObject.AddComponent<MissionManager>();
         missionManager.Initialize(this);
+
+        // 그림자 군대 클래스 시너지
+        armyManager = gameObject.AddComponent<ArmyManager>();
+        armyManager.Initialize(this);
 
         UpdateUI();
         CreateLanguageButton();
@@ -215,7 +221,7 @@ public class GameManager : MonoBehaviour
 
         float prestigeMultiplier = 1f + (goldenDisks * 0.1f);
         float equipMultiplier = GetEquipmentMultiplier();
-        clickProfit = (long)(clickProfit * prestigeMultiplier * equipMultiplier * GetGateMultiplier());
+        clickProfit = (long)(clickProfit * prestigeMultiplier * equipMultiplier * GetGateMultiplier() * GetSynergyMultiplier());
 
         if (IsOverclockActive) clickProfit *= 5;
 
@@ -271,7 +277,7 @@ public class GameManager : MonoBehaviour
 
         float prestigeMultiplier = 1f + (goldenDisks * 0.1f);
         float equipMultiplier = GetEquipmentMultiplier();
-        total = (long)(total * prestigeMultiplier * equipMultiplier * GetGateMultiplier());
+        total = (long)(total * prestigeMultiplier * equipMultiplier * GetGateMultiplier() * GetSynergyMultiplier());
 
         return total;
     }
@@ -284,6 +290,7 @@ public class GameManager : MonoBehaviour
         totalMultiplier *= (1f + (goldenDisks * 0.1f));
         totalMultiplier *= GetEquipmentMultiplier();
         totalMultiplier *= GetGateMultiplier();
+        totalMultiplier *= GetSynergyMultiplier();
         return totalMultiplier;
     }
 
@@ -433,9 +440,12 @@ public class GameManager : MonoBehaviour
                 }
             }
         }
+
+        armyManager?.RefreshSynergy();
     }
 
     public float GetGateMultiplier() => gateManager != null ? gateManager.GetGateMultiplier() : 1f;
+    public float GetSynergyMultiplier() => armyManager != null ? armyManager.GetSynergyMultiplier() : 1f;
     public void DealGateDamage(long amount) => gateManager?.DealDamage(amount);
 
     // 임무 진행 이벤트 훅
